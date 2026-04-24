@@ -344,8 +344,8 @@ Copy a checkmark as you ship each item:
 - [x] 2.3 Experiences & Adventures redesign
 
 ### Phase 3
-- [ ] 3.1 AI idea generator
-- [ ] 3.2 Comment threads
-- [ ] 3.3 Interactive map
-- [ ] 3.4 Villa photo carousel
-- [ ] 3.5 Villa description sidebar
+- [x] 3.1 AI idea generator
+- [x] 3.2 Comment threads
+- [x] 3.3 Interactive map
+- [x] 3.4 Villa photo carousel
+- [x] 3.5 Villa description sidebar
