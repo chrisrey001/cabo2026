@@ -41,6 +41,7 @@ export default function Cast() {
           .select();
         if (!alive) return;
         if (seedError || !seeded) {
+          console.error("[cabo2026] guests seed failed:", seedError);
           setCast(DEFAULT_CAST);
         } else {
           setCast([...seeded].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)));
@@ -63,7 +64,8 @@ export default function Cast() {
       const { error } = await supabase.from("guests").upsert(changed);
       if (error) throw error;
       emitSave("saved");
-    } catch {
+    } catch (err) {
+      console.error("[cabo2026] guests upsert failed:", err, "payload:", changed);
       emitSave("error");
     }
   };
@@ -96,6 +98,7 @@ export default function Cast() {
       .select()
       .single();
     if (error) {
+      console.error("[cabo2026] guests insert failed:", error);
       setCast([...cast, draft]);
       emitSave("error");
       return;
@@ -110,6 +113,7 @@ export default function Cast() {
     if (!hasSupabase || String(id).startsWith("local-")) return;
     emitSave("saving");
     const { error } = await supabase.from("guests").delete().eq("id", id);
+    if (error) console.error("[cabo2026] guests delete failed:", error);
     emitSave(error ? "error" : "saved");
   };
 

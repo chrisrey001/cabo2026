@@ -76,6 +76,7 @@ export default function Itinerary() {
           .insert(seedRows)
           .select();
         if (!alive) return;
+        if (seedError) console.error("[cabo2026] days seed failed:", seedError);
         rows = seedError || !seeded
           ? DEFAULT_DAYS
           : [...seeded].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
@@ -95,6 +96,7 @@ export default function Itinerary() {
     if (!hasSupabase) return;
     emitSave("saving");
     const { error } = await supabase.from("days").upsert(row);
+    if (error) console.error("[cabo2026] days upsert failed:", error, "payload:", row);
     emitSave(error ? "error" : "saved");
   };
 
@@ -133,6 +135,7 @@ export default function Itinerary() {
       .select()
       .single();
     if (error) {
+      console.error("[cabo2026] days insert failed:", error);
       setDays([...days, draft]);
       setOpenId(draft.id);
       emitSave("error");
@@ -150,6 +153,7 @@ export default function Itinerary() {
     if (!hasSupabase || String(id).startsWith("local-")) return;
     emitSave("saving");
     const { error } = await supabase.from("days").delete().eq("id", id);
+    if (error) console.error("[cabo2026] days delete failed:", error);
     emitSave(error ? "error" : "saved");
   };
 

@@ -72,6 +72,7 @@ export default function Flights() {
           .select();
         if (!alive) return;
         if (seedError || !seeded) {
+          console.error("[cabo2026] flights seed failed:", seedError);
           setFlights(DEFAULT_FLIGHTS);
         } else {
           setFlights([...seeded].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)));
@@ -90,6 +91,7 @@ export default function Flights() {
     if (!hasSupabase) return;
     emitSave("saving");
     const { error } = await supabase.from("flights").upsert(row);
+    if (error) console.error("[cabo2026] flights upsert failed:", error, "payload:", row);
     emitSave(error ? "error" : "saved");
   };
 
@@ -131,6 +133,7 @@ export default function Flights() {
       .select()
       .single();
     if (error) {
+      console.error("[cabo2026] flights insert failed:", error);
       setFlights([...flights, draft]);
       emitSave("error");
       return;
@@ -145,6 +148,7 @@ export default function Flights() {
     if (!hasSupabase || String(id).startsWith("local-")) return;
     emitSave("saving");
     const { error } = await supabase.from("flights").delete().eq("id", id);
+    if (error) console.error("[cabo2026] flights delete failed:", error);
     emitSave(error ? "error" : "saved");
   };
 
