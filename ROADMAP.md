@@ -332,20 +332,20 @@ instantly reverts without touching Git.
 Copy a checkmark as you ship each item:
 
 ### Phase 1
-- [ ] 1.1 Center Who's Coming tiles
-- [ ] 1.2 Center Forecast cards
-- [ ] 1.3 Live Weather (Open-Meteo)
-- [ ] 1.4 Sunrise / sunset per day
-- [ ] 1.5 Currency converter
+- [x] 1.1 Center Who's Coming tiles
+- [x] 1.2 Center Forecast cards
+- [x] 1.3 Live Weather (Open-Meteo)
+- [x] 1.4 Sunrise / sunset per day
+- [x] 1.5 Currency converter
 
 ### Phase 2
-- [ ] 2.1 Group Polls
-- [ ] 2.2 Dining voting + edits
-- [ ] 2.3 Experiences & Adventures redesign
+- [x] 2.1 Group Polls
+- [x] 2.2 Dining voting + edits
+- [x] 2.3 Experiences & Adventures redesign
 
 ### Phase 3
-- [ ] 3.1 AI idea generator
-- [ ] 3.2 Comment threads
-- [ ] 3.3 Interactive map
-- [ ] 3.4 Villa photo carousel
-- [ ] 3.5 Villa description sidebar
+- [x] 3.1 AI idea generator
+- [x] 3.2 Comment threads
+- [x] 3.3 Interactive map
+- [x] 3.4 Villa photo carousel
+- [x] 3.5 Villa description sidebar

@@ -1,16 +1,8 @@
 import React from "react";
 import { COLORS, FONTS } from "../theme";
 import { SectionHeader } from "./Cast";
-
-const FORECAST = [
-  { day: "Sun", date: "14", emoji: "✈️", hi: 88, lo: 73 },
-  { day: "Mon", date: "15", emoji: "☀️", hi: 89, lo: 74 },
-  { day: "Tue", date: "16", emoji: "☀️", hi: 90, lo: 74 },
-  { day: "Wed", date: "17", emoji: "☀️", hi: 90, lo: 75 },
-  { day: "Thu", date: "18", emoji: "☀️", hi: 89, lo: 75 },
-  { day: "Fri", date: "19", emoji: "☀️", hi: 88, lo: 74 },
-  { day: "Sat", date: "20", emoji: "✈️", hi: 88, lo: 74 },
-];
+import CenteredGrid from "../components/CenteredGrid";
+import { useForecast } from "../hooks/useForecast";
 
 const STATS = [
   { label: "Humidity", value: "63 – 66%" },
@@ -18,7 +10,16 @@ const STATS = [
   { label: "Rain", value: "~0 in." },
 ];
 
+function formatTime(iso) {
+  if (!iso) return "";
+  const parts = iso.split("T");
+  if (parts.length < 2) return iso;
+  return parts[1].slice(0, 5);
+}
+
 export default function Weather() {
+  const { days, isLive, loading } = useForecast();
+
   return (
     <section
       id="weather"
@@ -33,15 +34,23 @@ export default function Weather() {
       <div style={{ position: "relative", maxWidth: 1200, margin: "0 auto" }}>
         <SectionHeader eyebrow="June in Cabo" title="The Forecast" light />
 
-        <div
-          style={{
-            marginTop: 48,
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-            gap: 14,
-          }}
-        >
-          {FORECAST.map((d) => (
+        {!loading && !isLive && (
+          <p
+            style={{
+              textAlign: "center",
+              fontFamily: FONTS.mono,
+              fontSize: "0.72rem",
+              color: "rgba(244,241,222,0.45)",
+              margin: "16px 0 0",
+              letterSpacing: "0.04em",
+            }}
+          >
+            ⊘ Showing seasonal averages · live data available ~30 days out
+          </p>
+        )}
+
+        <CenteredGrid minWidth={110} gap={14} style={{ marginTop: 32 }}>
+          {days.map((d) => (
             <div
               key={d.day + d.date}
               style={{
@@ -99,9 +108,24 @@ export default function Weather() {
               >
                 {d.lo}° low
               </div>
+              {d.sunrise && (
+                <div
+                  style={{
+                    fontFamily: FONTS.mono,
+                    fontSize: "0.62rem",
+                    color: COLORS.gold,
+                    marginTop: 8,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  🌅 {formatTime(d.sunrise)}
+                  <br />
+                  🌇 {formatTime(d.sunset)}
+                </div>
+              )}
             </div>
           ))}
-        </div>
+        </CenteredGrid>
 
         <div
           style={{

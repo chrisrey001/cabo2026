@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Trash2, Plus } from "lucide-react";
 import { COLORS, FONTS } from "../theme";
 import EditField from "../components/EditField";
+import CenteredGrid from "../components/CenteredGrid";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
 
@@ -129,28 +130,14 @@ export default function Cast() {
         <SectionHeader eyebrow="The Cast" title="Who's Coming" />
 
         {loading ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: 20,
-              marginTop: 48,
-            }}
-          >
+          <CenteredGrid minWidth={220} gap={20} style={{ marginTop: 48 }}>
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="skeleton" style={{ height: 200 }} />
             ))}
-          </div>
+          </CenteredGrid>
         ) : (
           <>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                gap: 20,
-                marginTop: 48,
-              }}
-            >
+            <CenteredGrid minWidth={220} gap={20} style={{ marginTop: 48 }}>
               {cast.map((c) => (
                 <CastCard
                   key={c.id}
@@ -160,7 +147,7 @@ export default function Cast() {
                   onRemove={() => removeOne(c.id)}
                 />
               ))}
-            </div>
+            </CenteredGrid>
             <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
               <button
                 onClick={addCouple}
