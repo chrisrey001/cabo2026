@@ -87,7 +87,7 @@ export default function SuggestionsModal({ suggestions: initial, onAdd, onClose 
         </div>
 
         {/* Suggestion list */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 24px 24px", display: "grid", gap: 14, alignContent: "start" }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 24px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
           {remaining.map((s, idx) => {
             const tagColor = TAG_COLORS[s.tag] || COLORS.teal;
             return (
@@ -98,7 +98,7 @@ export default function SuggestionsModal({ suggestions: initial, onAdd, onClose 
                   borderRadius: 16,
                   border: "1px solid rgba(38,70,83,0.08)",
                   boxShadow: "0 4px 14px rgba(38,70,83,0.06)",
-                  overflow: "hidden",
+                  flexShrink: 0,
                 }}
               >
                 <div style={{ padding: "18px 20px 14px" }}>
@@ -142,6 +142,7 @@ export default function SuggestionsModal({ suggestions: initial, onAdd, onClose 
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                       padding: "12px", fontFamily: FONTS.sans, fontSize: "0.82rem", fontWeight: 600,
                       color: COLORS.muted, transition: "background 0.15s ease",
+                      borderBottomLeftRadius: 16,
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(38,70,83,0.05)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
@@ -155,6 +156,7 @@ export default function SuggestionsModal({ suggestions: initial, onAdd, onClose 
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                       padding: "12px", fontFamily: FONTS.sans, fontSize: "0.82rem", fontWeight: 700,
                       color: COLORS.teal, transition: "background 0.15s ease",
+                      borderBottomRightRadius: 16,
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(42,157,143,0.08)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
