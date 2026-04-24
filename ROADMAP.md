@@ -339,9 +339,9 @@ Copy a checkmark as you ship each item:
 - [x] 1.5 Currency converter
 
 ### Phase 2
-- [ ] 2.1 Group Polls
-- [ ] 2.2 Dining voting + edits
-- [ ] 2.3 Experiences & Adventures redesign
+- [x] 2.1 Group Polls
+- [x] 2.2 Dining voting + edits
+- [x] 2.3 Experiences & Adventures redesign
 
 ### Phase 3
 - [ ] 3.1 AI idea generator
