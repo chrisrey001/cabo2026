@@ -1,6 +1,15 @@
 import React from "react";
 import { COLORS, FONTS } from "../theme";
 import { SectionHeader } from "./Cast";
+import VillaCarousel from "../components/VillaCarousel";
+
+const VILLA_PHOTOS = [
+  { src: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80", alt: "Villa pool and outdoor living" },
+  { src: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=1200&q=80", alt: "Luxury infinity pool overlooking the sea" },
+  { src: "https://images.unsplash.com/photo-1615529328331-f8917597711f?w=1200&q=80", alt: "Master bedroom with ocean view" },
+  { src: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80", alt: "Open-air living room" },
+  { src: "https://images.unsplash.com/photo-1505693314120-0d443867891c?w=1200&q=80", alt: "Terrace at sunset" },
+];
 
 const AMENITIES = [
   { icon: "🛏️", label: "3 Kings + 1 Twin-Double" },
@@ -23,72 +32,47 @@ export default function Villa() {
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <SectionHeader eyebrow="Home Base" title="The Villa" />
 
+        <div style={{ marginTop: 48 }}>
+          <VillaCarousel photos={VILLA_PHOTOS} />
+        </div>
+
         <div
           style={{
-            marginTop: 48,
             position: "relative",
-            borderRadius: 22,
-            overflow: "hidden",
-            height: "clamp(300px, 46vw, 480px)",
-            boxShadow: "0 30px 60px rgba(38,70,83,0.2)",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            padding: "24px 32px 28px",
+            color: COLORS.foam,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            flexWrap: "wrap",
+            gap: 12,
+            marginTop: -80,
+            zIndex: 1,
+            pointerEvents: "none",
           }}
         >
-          <img
-            src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80"
-            alt="The villa"
-            loading="lazy"
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(180deg, rgba(26,31,58,0.15) 0%, rgba(26,31,58,0.25) 55%, rgba(26,31,58,0.75) 100%)",
-            }}
-          />
           <div
             style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              padding: "24px 32px 28px",
-              color: COLORS.foam,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
-              flexWrap: "wrap",
-              gap: 12,
+              fontFamily: FONTS.display,
+              fontSize: "clamp(1.3rem, 3vw, 2rem)",
+              fontWeight: 800,
+              letterSpacing: "-0.01em",
             }}
           >
-            <div
-              style={{
-                fontFamily: FONTS.display,
-                fontSize: "clamp(1.3rem, 3vw, 2rem)",
-                fontWeight: 800,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              Villa Dos Mares
-            </div>
-            <div
-              style={{
-                fontFamily: FONTS.sans,
-                fontSize: "0.9rem",
-                fontWeight: 500,
-                opacity: 0.92,
-              }}
-            >
-              4 Bedrooms · 3,059 sq ft · Palmilla Enclave
-            </div>
+            Villa Dos Mares
+          </div>
+          <div
+            style={{
+              fontFamily: FONTS.sans,
+              fontSize: "0.9rem",
+              fontWeight: 500,
+              opacity: 0.92,
+            }}
+          >
+            4 Bedrooms · 3,059 sq ft · Palmilla Enclave
           </div>
         </div>
 
