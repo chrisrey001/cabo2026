@@ -8,6 +8,7 @@ import Weather from "./sections/Weather";
 import MapSection from "./sections/Map";
 import Activities from "./sections/Activities";
 import Itinerary from "./sections/Itinerary";
+import Polls from "./sections/Polls";
 import Dining from "./sections/Dining";
 import Logistics from "./sections/Logistics";
 import CTA from "./sections/CTA";
@@ -25,6 +26,7 @@ export default function App() {
         <MapSection />
         <Activities />
         <Itinerary />
+        <Polls />
         <Dining />
         <Logistics />
         <CTA />
