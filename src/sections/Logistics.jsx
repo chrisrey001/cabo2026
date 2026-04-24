@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { COLORS, FONTS } from "../theme";
 import { SectionHeader } from "./Cast";
 import CopyButton from "../components/CopyButton";
+import CurrencyConverter from "../components/CurrencyConverter";
 
 const LOGISTICS = [
   {
@@ -53,7 +54,32 @@ export default function Logistics() {
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <SectionHeader eyebrow="Need to Know" title="The Logistics" />
 
-        <div style={{ marginTop: 48, display: "grid", gap: 12 }}>
+        <div
+          style={{
+            marginTop: 48,
+            background: "#fff",
+            borderRadius: 14,
+            border: "1px solid rgba(38,70,83,0.08)",
+            boxShadow: "0 3px 10px rgba(38,70,83,0.04)",
+            padding: "20px 24px",
+            marginBottom: 12,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: FONTS.display,
+              fontSize: "1.05rem",
+              fontWeight: 700,
+              color: COLORS.night,
+              marginBottom: 16,
+            }}
+          >
+            💱 Currency Converter
+          </div>
+          <CurrencyConverter />
+        </div>
+
+        <div style={{ display: "grid", gap: 12 }}>
           {LOGISTICS.map((item, i) => {
             const open = openIdx === i;
             return (
