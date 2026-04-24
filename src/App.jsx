@@ -6,6 +6,11 @@ import Villa from "./sections/Villa";
 import Flights from "./sections/Flights";
 import Weather from "./sections/Weather";
 import MapSection from "./sections/Map";
+import Activities from "./sections/Activities";
+import Itinerary from "./sections/Itinerary";
+import Dining from "./sections/Dining";
+import Logistics from "./sections/Logistics";
+import CTA from "./sections/CTA";
 
 export default function App() {
   return (
@@ -18,6 +23,11 @@ export default function App() {
         <Flights />
         <Weather />
         <MapSection />
+        <Activities />
+        <Itinerary />
+        <Dining />
+        <Logistics />
+        <CTA />
       </main>
     </>
   );
