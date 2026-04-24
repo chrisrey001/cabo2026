@@ -62,8 +62,20 @@ export default function Flights() {
         .select("id, couple, sort, outbound, return_leg")
         .order("sort", { ascending: true });
       if (!alive) return;
-      if (error || !data || !data.length) {
+      if (error) {
         setFlights(DEFAULT_FLIGHTS);
+      } else if (!data || !data.length) {
+        const seedRows = DEFAULT_FLIGHTS.map(({ id, ...rest }) => rest);
+        const { data: seeded, error: seedError } = await supabase
+          .from("flights")
+          .insert(seedRows)
+          .select();
+        if (!alive) return;
+        if (seedError || !seeded) {
+          setFlights(DEFAULT_FLIGHTS);
+        } else {
+          setFlights([...seeded].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)));
+        }
       } else {
         setFlights(data);
       }

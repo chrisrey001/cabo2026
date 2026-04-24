@@ -66,7 +66,22 @@ export default function Itinerary() {
         .select("id, emoji, title, day_label, sort, events")
         .order("sort", { ascending: true });
       if (!alive) return;
-      const rows = !error && data && data.length ? data : DEFAULT_DAYS;
+      let rows;
+      if (error) {
+        rows = DEFAULT_DAYS;
+      } else if (!data || !data.length) {
+        const seedRows = DEFAULT_DAYS.map(({ id, ...rest }) => rest);
+        const { data: seeded, error: seedError } = await supabase
+          .from("days")
+          .insert(seedRows)
+          .select();
+        if (!alive) return;
+        rows = seedError || !seeded
+          ? DEFAULT_DAYS
+          : [...seeded].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+      } else {
+        rows = data;
+      }
       setDays(rows);
       setOpenId(rows[0]?.id ?? null);
       setLoading(false);

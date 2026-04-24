@@ -31,8 +31,20 @@ export default function Cast() {
         .select("id, emoji, name, role, confirmed, sort")
         .order("sort", { ascending: true });
       if (!alive) return;
-      if (error || !data || !data.length) {
+      if (error) {
         setCast(DEFAULT_CAST);
+      } else if (!data || !data.length) {
+        const seedRows = DEFAULT_CAST.map(({ id, ...rest }) => rest);
+        const { data: seeded, error: seedError } = await supabase
+          .from("guests")
+          .insert(seedRows)
+          .select();
+        if (!alive) return;
+        if (seedError || !seeded) {
+          setCast(DEFAULT_CAST);
+        } else {
+          setCast([...seeded].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)));
+        }
       } else {
         setCast(data);
       }
