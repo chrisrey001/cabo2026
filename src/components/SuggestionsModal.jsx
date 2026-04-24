@@ -38,7 +38,7 @@ export default function SuggestionsModal({ suggestions: initial, onAdd, onClose 
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 500,
+        zIndex: 9999,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -87,7 +87,7 @@ export default function SuggestionsModal({ suggestions: initial, onAdd, onClose 
         </div>
 
         {/* Suggestion list */}
-        <div style={{ overflowY: "auto", padding: "16px 24px 24px", display: "grid", gap: 14 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 24px 24px", display: "grid", gap: 14, alignContent: "start" }}>
           {remaining.map((s, idx) => {
             const tagColor = TAG_COLORS[s.tag] || COLORS.teal;
             return (
