@@ -332,11 +332,11 @@ instantly reverts without touching Git.
 Copy a checkmark as you ship each item:
 
 ### Phase 1
-- [ ] 1.1 Center Who's Coming tiles
-- [ ] 1.2 Center Forecast cards
-- [ ] 1.3 Live Weather (Open-Meteo)
-- [ ] 1.4 Sunrise / sunset per day
-- [ ] 1.5 Currency converter
+- [x] 1.1 Center Who's Coming tiles
+- [x] 1.2 Center Forecast cards
+- [x] 1.3 Live Weather (Open-Meteo)
+- [x] 1.4 Sunrise / sunset per day
+- [x] 1.5 Currency converter
 
 ### Phase 2
 - [ ] 2.1 Group Polls
