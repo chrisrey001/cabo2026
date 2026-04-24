@@ -6,6 +6,7 @@ import EditField from "../components/EditField";
 import VoterModal from "../components/VoterModal";
 import VoterPills from "../components/VoterPills";
 import SuggestionsModal from "../components/SuggestionsModal";
+import CommentThread from "../components/CommentThread";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
@@ -54,6 +55,7 @@ export default function Activities() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [comments, setComments] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestModal, setShowSuggestModal] = useState(false);
@@ -65,12 +67,14 @@ export default function Activities() {
       return;
     }
     (async () => {
-      const [{ data: aData, error: aErr }, { data: vData, error: vErr }] = await Promise.all([
+      const [{ data: aData, error: aErr }, { data: vData, error: vErr }, { data: cData, error: cErr }] = await Promise.all([
         supabase.from("activities").select("*").order("sort", { ascending: true }),
         supabase.from("activity_votes").select("*"),
+        supabase.from("activity_comments").select("*").order("created_at", { ascending: true }),
       ]);
       if (aErr) console.error("[cabo2026] activities load failed:", aErr);
       if (vErr) console.error("[cabo2026] activity_votes load failed:", vErr);
+      if (cErr) console.error("[cabo2026] activity_comments load failed:", cErr);
 
       let rows = aData || [];
       if (!rows.length) {
@@ -80,6 +84,7 @@ export default function Activities() {
       }
       setActivities(rows);
       setAvotes(vData || []);
+      setComments(cData || []);
       setLoading(false);
     })();
   }, []);
@@ -151,6 +156,21 @@ export default function Activities() {
       else { setActivities((prev) => [...prev, data]); emitSave("saved"); }
     }
     setForm(BLANK_FORM); setShowForm(false); setSubmitting(false);
+  };
+
+  const addComment = async (activityId, body) => {
+    const author = localStorage.getItem("cabo26:voter_name") || null;
+    const draft = { activity_id: activityId, author, body, created_at: new Date().toISOString() };
+    const optimisticId = `local-${Date.now()}`;
+    setComments((prev) => [...prev, { ...draft, id: optimisticId }]);
+    if (!hasSupabase) return;
+    const { data, error } = await supabase.from("activity_comments").insert({ activity_id: activityId, author, body }).select().single();
+    if (error) {
+      console.error("[cabo2026] activity_comments insert failed:", error);
+      setComments((prev) => prev.filter((c) => c.id !== optimisticId));
+    } else {
+      setComments((prev) => prev.map((c) => (c.id === optimisticId ? data : c)));
+    }
   };
 
   const addActivityFromSuggestion = useCallback(async (s) => {
@@ -278,6 +298,10 @@ export default function Activities() {
                             <VoterPills voters={voters} />
                           </div>
                         )}
+                        <CommentThread
+                          comments={comments.filter((c) => c.activity_id === a.id)}
+                          onAdd={(body) => addComment(a.id, body)}
+                        />
                       </div>
                     )}
                   </div>
