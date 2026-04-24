@@ -11,6 +11,14 @@ const VILLA_PHOTOS = [
   { src: "https://images.unsplash.com/photo-1505693314120-0d443867891c?w=1200&q=80", alt: "Terrace at sunset" },
 ];
 
+const VILLA_DESCRIPTION = `Villa Dos Mares sits within the gated Palmilla Enclave, one of Los Cabos' most prestigious private residential communities. The villa's name — "Two Seas" — nods to its perch between the Pacific Ocean and the Sea of Cortez, where the waters famously converge at Land's End.
+
+The 3,059 sq ft floor plan is designed for living outside. Multiple terraces spill from the interior living spaces, and the private pool becomes the natural gathering place for afternoons in the Baja sun. Inside, three king suites and a twin-double bedroom offer generous space for a group, each finished with high ceilings and natural materials that keep things cool even in June.
+
+As Palmilla Enclave residents, we have direct access to Palmilla Beach — one of the few calm, swimmable beaches in the area — as well as two complimentary golf carts for getting around the grounds. The One&Only Palmilla resort's spa, pools, and restaurants are a short cart ride away, as is the Dunes Club.
+
+Palmilla itself is ideally positioned: San José del Cabo is 10 minutes east, the marina is 10 minutes the other direction, and Cabo San Lucas (and El Arco) is about 30 minutes west along the coastal corridor.`;
+
 const AMENITIES = [
   { icon: "🛏️", label: "3 Kings + 1 Twin-Double" },
   { icon: "⛳", label: "Palmilla Golf Course" },
@@ -80,37 +88,60 @@ export default function Villa() {
           style={{
             marginTop: 36,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: 16,
+            gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+            gap: 40,
+            alignItems: "start",
           }}
         >
-          {AMENITIES.map((a) => (
-            <div
-              key={a.label}
-              style={{
-                background: "#fff",
-                borderRadius: 14,
-                padding: "18px 20px",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                boxShadow: "0 6px 16px rgba(38,70,83,0.06)",
-                border: "1px solid rgba(38,70,83,0.06)",
-              }}
-            >
-              <span style={{ fontSize: "1.7rem", lineHeight: 1 }}>{a.icon}</span>
-              <span
+          {/* Amenity grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {AMENITIES.map((a) => (
+              <div
+                key={a.label}
                 style={{
-                  fontFamily: FONTS.sans,
-                  fontSize: "0.92rem",
-                  fontWeight: 600,
-                  color: COLORS.indigo,
+                  background: "#fff",
+                  borderRadius: 14,
+                  padding: "16px 18px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  boxShadow: "0 6px 16px rgba(38,70,83,0.06)",
+                  border: "1px solid rgba(38,70,83,0.06)",
                 }}
               >
-                {a.label}
-              </span>
-            </div>
-          ))}
+                <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>{a.icon}</span>
+                <span
+                  style={{
+                    fontFamily: FONTS.sans,
+                    fontSize: "0.88rem",
+                    fontWeight: 600,
+                    color: COLORS.indigo,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {a.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Description */}
+          <div>
+            {VILLA_DESCRIPTION.split("\n\n").map((para, i) => (
+              <p
+                key={i}
+                style={{
+                  fontFamily: FONTS.sans,
+                  fontSize: "0.98rem",
+                  lineHeight: 1.75,
+                  color: COLORS.indigo,
+                  margin: "0 0 1em",
+                }}
+              >
+                {para}
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </section>
