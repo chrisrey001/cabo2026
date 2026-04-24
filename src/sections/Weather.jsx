@@ -1,6 +1,7 @@
 import React from "react";
 import { COLORS, FONTS } from "../theme";
 import { SectionHeader } from "./Cast";
+import CenteredGrid from "../components/CenteredGrid";
 
 const FORECAST = [
   { day: "Sun", date: "14", emoji: "✈️", hi: 88, lo: 73 },
@@ -33,14 +34,7 @@ export default function Weather() {
       <div style={{ position: "relative", maxWidth: 1200, margin: "0 auto" }}>
         <SectionHeader eyebrow="June in Cabo" title="The Forecast" light />
 
-        <div
-          style={{
-            marginTop: 48,
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-            gap: 14,
-          }}
-        >
+        <CenteredGrid minWidth={110} gap={14} style={{ marginTop: 48 }}>
           {FORECAST.map((d) => (
             <div
               key={d.day + d.date}
@@ -101,7 +95,7 @@ export default function Weather() {
               </div>
             </div>
           ))}
-        </div>
+        </CenteredGrid>
 
         <div
           style={{
