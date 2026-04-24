@@ -25,7 +25,7 @@ export const SECTIONS = [
   { id: "flights", label: "Flights" },
   { id: "weather", label: "Weather" },
   { id: "map", label: "Map" },
-  { id: "activities", label: "Activities" },
+  { id: "activities", label: "Experiences" },
   { id: "itinerary", label: "Itinerary" },
   { id: "polls", label: "Polls" },
   { id: "dining", label: "Dining" },
