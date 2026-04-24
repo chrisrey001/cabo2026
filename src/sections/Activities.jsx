@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { ChevronDown, Heart, Plus } from "lucide-react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
+import { ChevronDown, Heart, Plus, Sparkles } from "lucide-react";
 import { COLORS, FONTS } from "../theme";
 import { SectionHeader } from "./Cast";
 import EditField from "../components/EditField";
 import VoterModal from "../components/VoterModal";
 import VoterPills from "../components/VoterPills";
+import SuggestionsModal from "../components/SuggestionsModal";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
@@ -53,6 +54,9 @@ export default function Activities() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
 
   useEffect(() => {
     if (!hasSupabase) {
@@ -149,6 +153,39 @@ export default function Activities() {
     setForm(BLANK_FORM); setShowForm(false); setSubmitting(false);
   };
 
+  const addActivityFromSuggestion = useCallback(async (s) => {
+    const nextSort = activities.length ? Math.max(...activities.map((a) => a.sort ?? 0)) + 1 : 0;
+    const draft = { title: s.title || "", icon: s.icon || "✨", cost: s.cost || "", duration: s.duration || "", distance: s.distance || "", description: s.description || "", tag: s.tag || "Adventure", sort: nextSort, added_by: "Claude ✨" };
+    if (!hasSupabase) {
+      setActivities((prev) => [...prev, { ...draft, id: `local-${Date.now()}` }]);
+    } else {
+      emitSave("saving");
+      const { data, error } = await supabase.from("activities").insert(draft).select().single();
+      if (error) { console.error("[cabo2026] activity insert (AI) failed:", error); emitSave("error"); }
+      else { setActivities((prev) => [...prev, data]); emitSave("saved"); }
+    }
+  }, [activities, hasSupabase]);
+
+  const handleSuggest = async () => {
+    setLoadingSuggestions(true);
+    try {
+      const res = await fetch("/.netlify/functions/suggest-activities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activities }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Request failed");
+      setSuggestions(json.suggestions || []);
+      setShowSuggestModal(true);
+    } catch (err) {
+      console.error("[cabo2026] suggest-activities error:", err);
+      alert("Couldn't reach the suggestion service. Check that ANTHROPIC_API_KEY is set in Netlify.");
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
   const sorted = useMemo(() => {
     const arr = [...activities];
     if (sortKey === "votes") arr.sort((a, b) => voteCount(b.id) - voteCount(a.id));
@@ -161,6 +198,13 @@ export default function Activities() {
     <>
       {showModal && (
         <VoterModal onConfirm={handleModalConfirm} onDismiss={() => { setShowModal(false); setPendingVote(null); }} />
+      )}
+      {showSuggestModal && suggestions.length > 0 && (
+        <SuggestionsModal
+          suggestions={suggestions}
+          onAdd={addActivityFromSuggestion}
+          onClose={() => { setShowSuggestModal(false); setSuggestions([]); }}
+        />
       )}
       <section id="activities" style={{ background: COLORS.warmWhite, padding: "100px 24px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
@@ -266,9 +310,19 @@ export default function Activities() {
               </div>
             </div>
           ) : (
-            <div style={{ marginTop: 20, display: "flex", justifyContent: "center" }}>
+            <div style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
               <button onClick={() => setShowForm(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", border: `2px dashed ${COLORS.teal}`, borderRadius: 999, color: COLORS.teal, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.9rem", background: "transparent", transition: "background 0.2s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(42,157,143,0.08)")} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                 <Plus size={16} /> Add an Experience
+              </button>
+              <button
+                onClick={handleSuggest}
+                disabled={loadingSuggestions}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", border: `2px dashed ${COLORS.gold}`, borderRadius: 999, color: COLORS.indigo, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.9rem", background: "transparent", transition: "background 0.2s ease", opacity: loadingSuggestions ? 0.65 : 1 }}
+                onMouseEnter={(e) => { if (!loadingSuggestions) e.currentTarget.style.background = "rgba(233,196,106,0.12)"; }}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                <Sparkles size={16} color={COLORS.gold} />
+                {loadingSuggestions ? "Thinking…" : "Suggest ideas"}
               </button>
             </div>
           )}
