@@ -97,3 +97,18 @@ textarea {
   background: var(--gold);
   color: var(--night);
 }
+
+/* ── Map tooltip ── */
+.leaflet-tooltip.cabo-tooltip {
+  background: white;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(38, 70, 83, 0.18);
+  padding: 8px 12px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.leaflet-tooltip.cabo-tooltip::before {
+  border-top-color: white;
+}
