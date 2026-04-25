@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { ChevronDown, Heart, Plus, Sparkles } from "lucide-react";
+import { ChevronDown, ExternalLink, Heart, Plus, Sparkles } from "lucide-react";
 import { COLORS, FONTS } from "../theme";
 import { SectionHeader } from "./Cast";
 import EditField from "../components/EditField";
@@ -12,11 +12,11 @@ import { emitSave } from "../components/SaveBadge";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
 
 const DEFAULT_ACTIVITIES = [
-  { title: "Flora Farms Dinner", icon: "🌿", cost: "$80–100/pp", duration: "Evening", distance: "~20 min drive", description: "A Michelin-recommended farm-to-table experience on a 25-acre organic farm. Dine under string lights with handcrafted cocktails and produce pulled from the ground that morning. This is the farewell dinner — book 4+ weeks ahead on OpenTable.", tag: "Culinary", sort: 0 },
-  { title: "Cabo Arch Boat Tour", icon: "⛵", cost: "$25–40/pp", duration: "2–3 hrs", distance: "30 min to Cabo Marina", description: "Cruise to Land's End to see El Arco — the iconic rock formation where the Pacific meets the Sea of Cortez. Stop at Lover's Beach, spot sea lions, and snap the postcard shot. Morning light is best.", tag: "Sightseeing", sort: 1 },
-  { title: "San José Art Walk", icon: "🎨", cost: "FREE", duration: "5–9 PM", distance: "10 min to downtown", description: "Thursday June 18 is the final Art Walk of the season. Local galleries open their doors, street musicians play, and the colonial downtown comes alive. Pair with dinner at Jazamín's afterward.", tag: "Culture", sort: 2 },
-  { title: "Deep-Sea Fishing Charter", icon: "🎣", cost: "$335–520/boat", duration: "Half day", distance: "10 min to Puerto Los Cabos", description: "June is peak season for marlin and dorado. Charter a boat from Puerto Los Cabos marina and chase big game in the nutrient-rich waters where the Pacific meets the Cortez. Split the boat 4 ways.", tag: "Adventure", sort: 3 },
-  { title: "ATV + Camel + Tequila", icon: "🐪", cost: "$130–165/pp", duration: "3–4 hrs", distance: "~30 min drive", description: "Rip through the Baja desert on ATVs, ride a camel along the dunes, then cap it off with a proper tequila tasting. This is the day you come home with the best stories.", tag: "Adventure", sort: 4 },
+  { title: "Flora Farms Dinner", icon: "🌿", cost: "$80–120/pp", duration: "Evening", distance: "~20 min drive", description: "Michelin-recommended farm-to-table on a 25-acre organic farm in San José del Cabo. Dine under string lights with produce pulled from the ground that morning. One of the hardest reservations in Los Cabos — book 4+ weeks ahead.", tag: "Culinary", sort: 0, link: "https://www.sevenrooms.com/reservations/florafarms" },
+  { title: "Cabo Arch Boat Tour", icon: "⛵", cost: "$25–40/pp", duration: "1–2 hrs", distance: "30 min to Cabo Marina", description: "Cruise to Land's End to see El Arco where the Pacific meets the Sea of Cortez. Stop at Lover's Beach, spot sea lions at Pelican Rock, and catch the postcard shot. Morning light is best. Mandatory $5 port fee paid at marina.", tag: "Sightseeing", sort: 1, link: "https://www.viator.com/Los-Cabos-attractions/Arch-of-Cabo-San-Lucas/d627-a979" },
+  { title: "San José Art Walk", icon: "🎨", cost: "FREE", duration: "5–9 PM", distance: "10 min to downtown", description: "Thursday evenings through June, 12 certified galleries open their doors in the colonial Art District. Street musicians, artists, blown glass, and textiles — traffic closed, wine flowing. June 18 is the final walk of the season.", tag: "Culture", sort: 2, link: "https://www.artcabo.com/san-jose-del-cabo-art-walk.html" },
+  { title: "Deep-Sea Fishing Charter", icon: "🎣", cost: "~$230/pp (8-hr boat)", duration: "Full day", distance: "10 min to Puerto Los Cabos", description: "June is peak season for marlin and dorado in the nutrient-rich waters off Baja. Picante Fleet runs a 100% company-owned fleet from Puerto Los Cabos marina — 30+ years of reputation. Split the full-day charter across the group.", tag: "Adventure", sort: 3, link: "https://picantesportfishing.com/" },
+  { title: "ATV + Camel + Tequila", icon: "🐪", cost: "$175+/pp", duration: "Half day", distance: "~30 min drive", description: "Rip through the Baja desert on automatic ATVs, ride a camel along Migriño Beach, then cap it with mezcal and tequila tasting plus a Mexican buffet. Cabo Adventures runs this combo — park entry ($25) and ATV insurance ($35) paid on-site.", tag: "Adventure", sort: 4, link: "https://www.cabo-adventures.com/en/tour/camel-atv-ecofarm" },
 ];
 
 const TAG_COLORS = {
@@ -41,7 +41,7 @@ function parseCostNum(cost) {
   return m ? parseInt(m[0], 10) : 0;
 }
 
-const BLANK_FORM = { icon: "✨", title: "", tag: "Adventure", cost: "", duration: "", distance: "", description: "" };
+const BLANK_FORM = { icon: "✨", title: "", tag: "Adventure", cost: "", duration: "", distance: "", description: "", link: "" };
 
 export default function Activities() {
   const { voterId, voterName, setVoterName, hasName } = useVoterIdentity();
@@ -175,7 +175,7 @@ export default function Activities() {
 
   const addActivityFromSuggestion = useCallback(async (s) => {
     const nextSort = activities.length ? Math.max(...activities.map((a) => a.sort ?? 0)) + 1 : 0;
-    const draft = { title: s.title || "", icon: s.icon || "✨", cost: s.cost || "", duration: s.duration || "", distance: s.distance || "", description: s.description || "", tag: s.tag || "Adventure", sort: nextSort, added_by: "Claude ✨" };
+    const draft = { title: s.title || "", icon: s.icon || "✨", cost: s.cost || "", duration: s.duration || "", distance: s.distance || "", description: s.description || "", tag: s.tag || "Adventure", link: s.link || "", sort: nextSort, added_by: "Claude ✨" };
     if (!hasSupabase) {
       setActivities((prev) => [...prev, { ...draft, id: `local-${Date.now()}` }]);
     } else {
@@ -293,6 +293,20 @@ export default function Activities() {
                         <div style={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600, marginTop: 10 }}>
                           📍 <EditField value={a.distance} onChange={(v) => updateOne(a.id, { distance: v })} placeholder="Distance" ariaLabel="Distance" />
                         </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+                          <span style={{ fontSize: "0.82rem", color: COLORS.muted, fontWeight: 600, flexShrink: 0 }}>🔗</span>
+                          <EditField value={a.link || ""} onChange={(v) => updateOne(a.id, { link: v })} placeholder="Add booking URL…" ariaLabel="Booking link" />
+                          {a.link && (
+                            <a
+                              href={a.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5, fontFamily: FONTS.sans, fontSize: "0.78rem", fontWeight: 700, color: "#fff", background: COLORS.teal, padding: "5px 12px", borderRadius: 999, whiteSpace: "nowrap" }}
+                            >
+                              <ExternalLink size={11} /> Book
+                            </a>
+                          )}
+                        </div>
                         {voters.length > 0 && (
                           <div style={{ marginTop: 12 }}>
                             <VoterPills voters={voters} />
@@ -326,6 +340,7 @@ export default function Activities() {
                 <input type="text" placeholder="Distance / location" value={form.distance} onChange={(e) => setForm((f) => ({ ...f, distance: e.target.value }))} style={formInputStyle} />
               </div>
               <textarea placeholder="Description…" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={3} style={{ ...formInputStyle, width: "100%", marginTop: 10, resize: "vertical", boxSizing: "border-box" }} />
+              <input type="url" placeholder="Booking URL (optional)" value={form.link} onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))} style={{ ...formInputStyle, width: "100%", marginTop: 10, boxSizing: "border-box" }} />
               <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
                 <button onClick={() => { setShowForm(false); setForm(BLANK_FORM); }} style={{ fontFamily: FONTS.sans, fontSize: "0.82rem", color: COLORS.muted, padding: "8px 14px" }}>Cancel</button>
                 <button onClick={addActivity} disabled={submitting || !form.title.trim()} style={{ fontFamily: FONTS.sans, fontWeight: 700, fontSize: "0.82rem", padding: "8px 18px", borderRadius: 999, background: COLORS.teal, color: "#fff", opacity: submitting ? 0.6 : 1 }}>

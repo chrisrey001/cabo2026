@@ -50,7 +50,10 @@ Avoid duplicating these existing ideas: ${existingTitles || "none yet"}.`,
     const match = raw.match(/\[[\s\S]*\]/);
     if (!match) throw new Error("No JSON array found in response");
 
-    const suggestions = JSON.parse(match[0]);
+    const suggestions = JSON.parse(match[0]).map((s) => ({
+      ...s,
+      link: `https://www.google.com/search?q=${encodeURIComponent((s.title || "") + " Los Cabos")}`,
+    }));
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ suggestions }) };
   } catch (err) {
     console.error("[suggest-activities] error:", err);

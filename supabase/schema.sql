@@ -124,6 +124,7 @@ create table if not exists activities (
   distance text not null default '',
   description text not null default '',
   tag text not null default '',
+  link text not null default '',
   added_by text,
   sort integer not null default 0,
   updated_at timestamptz not null default now()
