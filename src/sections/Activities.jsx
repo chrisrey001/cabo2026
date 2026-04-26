@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { ChevronDown, ExternalLink, Heart, Plus, Sparkles } from "lucide-react";
+import { ChevronDown, ExternalLink, Heart, Plus, Sparkles, Trash2 } from "lucide-react";
 import { COLORS, FONTS } from "../theme";
 import { SectionHeader } from "./Cast";
 import EditField from "../components/EditField";
@@ -59,6 +59,8 @@ export default function Activities() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
 
   useEffect(() => {
     if (!hasSupabase) {
@@ -158,8 +160,21 @@ export default function Activities() {
     setForm(BLANK_FORM); setShowForm(false); setSubmitting(false);
   };
 
+  const deleteActivity = async (id) => {
+    const prev = activities;
+    setActivities((a) => a.filter((x) => x.id !== id));
+    if (openId === id) setOpenId(null);
+    setConfirmingDelete(null);
+    if (!hasSupabase || String(id).startsWith("local-")) return;
+    const { error } = await supabase.from("activities").delete().match({ id });
+    if (error) {
+      console.error("[cabo2026] activity delete failed:", error);
+      setActivities(prev);
+    }
+  };
+
   const addComment = async (activityId, body) => {
-    const author = localStorage.getItem("cabo26:voter_name") || null;
+    const author = voterName || null;
     const draft = { activity_id: activityId, author, body, created_at: new Date().toISOString() };
     const optimisticId = `local-${Date.now()}`;
     setComments((prev) => [...prev, { ...draft, id: optimisticId }]);
@@ -200,7 +215,7 @@ export default function Activities() {
       setShowSuggestModal(true);
     } catch (err) {
       console.error("[cabo2026] suggest-activities error:", err);
-      alert("Couldn't reach the suggestion service. Check that ANTHROPIC_API_KEY is set in Netlify.");
+      alert("Couldn't load suggestions right now. Please try again in a moment.");
     } finally {
       setLoadingSuggestions(false);
     }
@@ -255,8 +270,15 @@ export default function Activities() {
                 const mv = myVoted(a.id);
                 const voters = avotes.filter((v) => v.activity_id === a.id);
 
+                const cc = comments.filter((c) => c.activity_id === a.id).length;
+
                 return (
-                  <div key={a.id} style={{ background: "#fff", borderRadius: 16, border: "1px solid rgba(38,70,83,0.08)", boxShadow: open ? "0 16px 40px rgba(38,70,83,0.12)" : "0 6px 18px rgba(38,70,83,0.05)", overflow: "hidden", transition: "box-shadow 0.25s ease" }}>
+                  <div
+                    key={a.id}
+                    style={{ background: "#fff", borderRadius: 16, border: "1px solid rgba(38,70,83,0.08)", boxShadow: open ? "0 16px 40px rgba(38,70,83,0.12)" : "0 6px 18px rgba(38,70,83,0.05)", overflow: "hidden", transition: "box-shadow 0.25s ease" }}
+                    onMouseEnter={() => setHoveredCard(a.id)}
+                    onMouseLeave={() => { setHoveredCard(null); if (confirmingDelete === a.id) setConfirmingDelete(null); }}
+                  >
                     <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "20px 22px" }}>
                       <span style={{ fontSize: "1.8rem", lineHeight: 1, flexShrink: 0 }}>
                         <EditField value={a.icon} onChange={(v) => updateOne(a.id, { icon: v })} placeholder="✨" ariaLabel="Icon" style={{ fontSize: "1.8rem" }} />
@@ -275,6 +297,12 @@ export default function Activities() {
                           <span style={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.16em", fontSize: "0.68rem", color: tagColor }}>
                             <EditField value={a.tag} onChange={(v) => updateOne(a.id, { tag: v })} placeholder="Tag" ariaLabel="Tag" />
                           </span>
+                          {!open && cc > 0 && (
+                            <>
+                              <span aria-hidden>·</span>
+                              <span style={{ fontFamily: FONTS.sans, fontSize: "0.72rem", color: COLORS.muted }}>💬 {cc}</span>
+                            </>
+                          )}
                         </div>
                       </button>
                       {/* Vote button */}
@@ -284,6 +312,34 @@ export default function Activities() {
                           <span style={{ fontFamily: FONTS.mono, fontSize: "0.75rem", color: mv ? COLORS.terracotta : COLORS.muted, fontWeight: 600 }}>{vc}</span>
                         </button>
                       </div>
+                      {/* Delete control */}
+                      {confirmingDelete === a.id ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                          <span style={{ fontFamily: FONTS.sans, fontSize: "0.75rem", color: COLORS.muted, whiteSpace: "nowrap" }}>Delete?</span>
+                          <button
+                            onClick={() => deleteActivity(a.id)}
+                            style={{ fontFamily: FONTS.sans, fontSize: "0.75rem", fontWeight: 700, color: "#fff", background: COLORS.terracotta, padding: "4px 10px", borderRadius: 999, whiteSpace: "nowrap" }}
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setConfirmingDelete(null)}
+                            style={{ fontFamily: FONTS.sans, fontSize: "0.75rem", color: COLORS.muted, padding: "4px 8px" }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmingDelete(a.id); }}
+                          aria-label="Delete activity"
+                          style={{ flexShrink: 0, opacity: hoveredCard === a.id ? 1 : 0, transition: "opacity 0.15s ease", padding: 4, borderRadius: 6, lineHeight: 0 }}
+                          onFocus={(e) => (e.currentTarget.style.opacity = "1")}
+                          onBlur={(e) => (e.currentTarget.style.opacity = "0")}
+                        >
+                          <Trash2 size={15} color={COLORS.muted} />
+                        </button>
+                      )}
                       <ChevronDown size={20} color={COLORS.muted} onClick={() => setOpenId(open ? null : a.id)} style={{ transition: "transform 0.25s ease", transform: open ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0, cursor: "pointer" }} />
                     </div>
 
