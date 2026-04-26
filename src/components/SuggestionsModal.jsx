@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Plus, SkipForward } from "lucide-react";
+import { X, Plus, SkipForward, ExternalLink } from "lucide-react";
 import { COLORS, FONTS } from "../theme";
 
 const TAG_COLORS = {
@@ -126,6 +126,34 @@ export default function SuggestionsModal({ suggestions: initial, onAdd, onClose 
                   )}
                   {s.distance && (
                     <div style={{ fontFamily: FONTS.sans, fontSize: "0.78rem", color: COLORS.muted }}>📍 {s.distance}</div>
+                  )}
+                  {s.link && (
+                    <a
+                      href={s.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        marginTop: 8,
+                        fontFamily: FONTS.sans,
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        color: COLORS.teal,
+                        background: "rgba(42,157,143,0.09)",
+                        padding: "4px 10px",
+                        borderRadius: 999,
+                        maxWidth: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      <ExternalLink size={11} />
+                      {(() => { try { return new URL(s.link).hostname.replace(/^www\./, ""); } catch { return s.link; } })()}
+                    </a>
                   )}
                 </div>
                 <div

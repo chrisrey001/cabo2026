@@ -18,9 +18,9 @@ whale watching, whale shark tours, gray whale tours, humpback whale tours, manta
 Search broadly across types — outdoor adventure, food and drink, culture, day trips, water activities, nightlife, wellness, etc. — and across a range of energy levels and price points. Do not constrain yourself to any specific category or list of activities.
 
 Return exactly 5 activities as a JSON array (no markdown, no explanation):
-[{"title":"...","icon":"(emoji)","cost":"$X/pp or range","duration":"X hours","distance":"X min from Palmilla","description":"2 sentences — what it is and why this group will love it.","tag":"Adventure|Culinary|Culture|Sightseeing|Beach|Wellness|Nightlife","link":"URL to operator site, viator listing, or tourism page — null if none found"}]
+[{"title":"...","icon":"(emoji)","cost":"$X/pp or range","duration":"X hours","distance":"X min from Palmilla","description":"2 sentences — what it is and why this group will love it.","tag":"Adventure|Culinary|Culture|Sightseeing|Beach|Wellness|Nightlife","link":"URL or null"}]
 
-Do not invent URLs. Use only links found via search. null is better than a made-up link.
+For each activity, include the best URL you found via search — the operator's own website, a Viator or GetYourGuide listing, or a relevant tourism page. A real URL to any genuinely helpful page is always better than null. Only return null if your search produced no relevant results at all for that specific activity.
 Avoid duplicating: ${existingTitles || "none yet"}.`;
 
 export const handler = async (event) => {
@@ -55,7 +55,7 @@ export const handler = async (event) => {
 
     if (hasTavily) {
       message = await client.beta.messages.create({
-        model: "claude-haiku-4-5",
+        model: "claude-sonnet-4-6",
         max_tokens: 2048,
         mcp_servers: [
           {
@@ -70,7 +70,7 @@ export const handler = async (event) => {
     } else {
       // Fallback: Claude uses training knowledge; null is fine for uncertain links
       message = await client.messages.create({
-        model: "claude-haiku-4-5",
+        model: "claude-sonnet-4-6",
         max_tokens: 2048,
         messages: [
           {
