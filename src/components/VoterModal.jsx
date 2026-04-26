@@ -28,9 +28,9 @@ export default function VoterModal({ onConfirm, onDismiss }) {
         inset: 0,
         zIndex: 9999,
         display: "flex",
-        alignItems: "center",
+        alignItems: window.innerWidth < 768 ? "flex-start" : "center",
         justifyContent: "center",
-        padding: 20,
+        padding: window.innerWidth < 768 ? "max(env(safe-area-inset-top, 24px), 24px) 20px 20px" : 20,
         background: "rgba(26,31,58,0.55)",
         backdropFilter: "blur(4px)",
         WebkitBackdropFilter: "blur(4px)",
@@ -93,9 +93,12 @@ export default function VoterModal({ onConfirm, onDismiss }) {
         <input
           ref={inputRef}
           type="text"
+          inputMode="text"
+          enterKeyHint="done"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+          onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "center" }), 100)}
           placeholder="e.g. Chris & Kate"
           maxLength={30}
           style={{

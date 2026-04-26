@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Trash2, Plus } from "lucide-react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import EditField from "../components/EditField";
 import CenteredGrid from "../components/CenteredGrid";
 import { supabase, hasSupabase } from "../supabase";
@@ -123,7 +123,7 @@ export default function Cast() {
       id="cast"
       style={{
         background: COLORS.warmWhite,
-        padding: "100px 24px",
+        padding: SPACING.section,
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -287,11 +287,12 @@ function CastCard({ person, canDelete, onUpdate, onRemove }) {
           fontWeight: 700,
           textTransform: "uppercase",
           letterSpacing: "0.08em",
-          padding: "6px 12px",
+          padding: "8px 14px",
           borderRadius: 999,
           background: pillBg,
           color: pillFg,
           transition: "all 0.2s ease",
+          minHeight: 36,
         }}
       >
         {pillText}

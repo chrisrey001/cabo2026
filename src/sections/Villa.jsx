@@ -1,5 +1,5 @@
 import React from "react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import VillaCarousel from "../components/VillaCarousel";
 
@@ -51,7 +51,7 @@ export default function Villa() {
       id="villa"
       style={{
         background: COLORS.sand,
-        padding: "100px 24px",
+        padding: SPACING.section,
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -105,7 +105,7 @@ export default function Villa() {
           style={{
             marginTop: 36,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(340px, 100%), 1fr))",
             gap: 40,
             alignItems: "start",
           }}

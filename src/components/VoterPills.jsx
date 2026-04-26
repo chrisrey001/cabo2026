@@ -24,7 +24,7 @@ function Pill({ voter }) {
         justifyContent: "center",
         fontFamily: FONTS.sans,
         fontWeight: 700,
-        fontSize: "0.7rem",
+        fontSize: "0.75rem",
         color: "#fff",
         flexShrink: 0,
         border: "2px solid #fff",
@@ -53,7 +53,7 @@ export default function VoterPills({ voters = [], max = 6 }) {
           onClick={() => setExpanded(true)}
           style={{
             fontFamily: FONTS.sans,
-            fontSize: "0.7rem",
+            fontSize: "0.75rem",
             fontWeight: 600,
             color: "rgba(38,70,83,0.55)",
             padding: "2px 6px",

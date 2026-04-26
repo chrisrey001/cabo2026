@@ -1,0 +1,11 @@
+{
+  "name": "Cabo '26 — Parents' Getaway",
+  "short_name": "Cabo '26",
+  "description": "Trip planning for 8 adults in Los Cabos, June 2026",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FFFCF7",
+  "theme_color": "#264653",
+  "icons": []
+}

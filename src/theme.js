@@ -34,3 +34,8 @@ export const SECTIONS = [
 ];
 
 export const TRIP_START = "2026-06-14T09:25:00-06:00";
+
+export const SPACING = {
+  section: "clamp(64px, 10vw, 100px) 24px",
+  sectionHero: "clamp(80px, 12vw, 120px) 24px clamp(60px, 8vw, 80px)",
+};

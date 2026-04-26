@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
-import { COLORS, FONTS, TRIP_START } from "../theme";
+import { COLORS, FONTS, SPACING, TRIP_START } from "../theme";
 
 export default function CTA() {
   const [daysOut, setDaysOut] = useState(() => computeDays());
@@ -38,7 +38,7 @@ export default function CTA() {
       style={{
         position: "relative",
         overflow: "hidden",
-        padding: "120px 24px 80px",
+        padding: SPACING.sectionHero,
         background: `linear-gradient(160deg, ${COLORS.indigo} 0%, ${COLORS.night} 40%, rgba(231,111,81,0.66) 100%)`,
         color: COLORS.foam,
         textAlign: "center",

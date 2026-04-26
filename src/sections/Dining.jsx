@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { UtensilsCrossed, Clock, MapPin, Phone, Navigation, Heart, Plus } from "lucide-react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import EditField from "../components/EditField";
 import CenteredGrid from "../components/CenteredGrid";
@@ -152,7 +152,7 @@ export default function Dining() {
       {showModal && (
         <VoterModal onConfirm={handleModalConfirm} onDismiss={() => { setShowModal(false); setPendingVote(null); }} />
       )}
-      <section id="dining" style={{ background: COLORS.warmWhite, padding: "100px 24px" }}>
+      <section id="dining" style={{ background: COLORS.warmWhite, padding: SPACING.section }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <SectionHeader eyebrow="Where We'll Eat" title="The Dining Guide" />
 
@@ -237,12 +237,12 @@ function DiningCard({ r, voteCount, myVoted, voters, onUpdate, onVote }) {
           </div>
           {/* Vote button */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
-            <button onClick={onVote} aria-label={myVoted ? "Remove vote" : "Vote for this restaurant"} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 999, background: myVoted ? "rgba(231,111,81,0.12)" : "rgba(38,70,83,0.05)", transition: "all 0.15s ease" }}>
+            <button onClick={onVote} aria-label={myVoted ? "Remove vote" : "Vote for this restaurant"} style={{ display: "flex", alignItems: "center", gap: 4, padding: "8px 12px", borderRadius: 999, background: myVoted ? "rgba(231,111,81,0.12)" : "rgba(38,70,83,0.05)", transition: "all 0.15s ease" }}>
               <Heart size={14} color={myVoted ? COLORS.terracotta : COLORS.muted} fill={myVoted ? COLORS.terracotta : "none"} />
               <span style={{ fontFamily: FONTS.mono, fontSize: "0.75rem", color: myVoted ? COLORS.terracotta : COLORS.muted, fontWeight: 600 }}>{voteCount}</span>
             </button>
             {voters.length > 0 && (
-              <button onClick={() => setShowVoters((v) => !v)} style={{ fontFamily: FONTS.sans, fontSize: "0.62rem", color: COLORS.muted, textDecoration: "underline", textUnderlineOffset: 2 }}>
+              <button onClick={() => setShowVoters((v) => !v)} style={{ fontFamily: FONTS.sans, fontSize: "0.75rem", color: COLORS.muted, textDecoration: "underline", textUnderlineOffset: 2 }}>
                 {showVoters ? "hide" : "who?"}
               </button>
             )}

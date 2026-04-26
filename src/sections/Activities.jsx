@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { ChevronDown, ExternalLink, Heart, Plus, Sparkles, Trash2 } from "lucide-react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import EditField from "../components/EditField";
 import VoterModal from "../components/VoterModal";
@@ -241,7 +241,7 @@ export default function Activities() {
           onClose={() => { setShowSuggestModal(false); setSuggestions([]); }}
         />
       )}
-      <section id="activities" style={{ background: COLORS.warmWhite, padding: "100px 24px" }}>
+      <section id="activities" style={{ background: COLORS.warmWhite, padding: SPACING.section }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <SectionHeader eyebrow="Experiences & Adventures" title="Experiences & Adventures" />
 
@@ -333,9 +333,9 @@ export default function Activities() {
                         <button
                           onClick={(e) => { e.stopPropagation(); setConfirmingDelete(a.id); }}
                           aria-label="Delete activity"
-                          style={{ flexShrink: 0, opacity: hoveredCard === a.id ? 1 : 0, transition: "opacity 0.15s ease", padding: 4, borderRadius: 6, lineHeight: 0 }}
+                          style={{ flexShrink: 0, opacity: (window.matchMedia("(hover: none)").matches || hoveredCard === a.id) ? 1 : 0, transition: "opacity 0.15s ease", padding: 8, borderRadius: 6, lineHeight: 0, minWidth: 32, minHeight: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
                           onFocus={(e) => (e.currentTarget.style.opacity = "1")}
-                          onBlur={(e) => (e.currentTarget.style.opacity = "0")}
+                          onBlur={(e) => (e.currentTarget.style.opacity = window.matchMedia("(hover: none)").matches ? "1" : "0")}
                         >
                           <Trash2 size={15} color={COLORS.muted} />
                         </button>

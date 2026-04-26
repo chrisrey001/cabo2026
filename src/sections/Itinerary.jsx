@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ChevronDown, Plus, Trash2, X } from "lucide-react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import EditField from "../components/EditField";
 import { SectionHeader } from "./Cast";
 import { supabase, hasSupabase } from "../supabase";
@@ -184,7 +184,7 @@ export default function Itinerary() {
       id="itinerary"
       style={{
         background: COLORS.sand,
-        padding: "100px 24px",
+        padding: SPACING.section,
       }}
     >
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
@@ -417,8 +417,13 @@ function DayCard({ day, open, canDelete, onToggle, onChange, onRemove, onAddEven
                       style={{
                         color: COLORS.muted,
                         opacity: 0.5,
-                        padding: 4,
+                        padding: 8,
                         borderRadius: 6,
+                        minWidth: 32,
+                        minHeight: 32,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {

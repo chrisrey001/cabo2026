@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import CopyButton from "../components/CopyButton";
 import CurrencyConverter from "../components/CurrencyConverter";
@@ -48,7 +48,7 @@ export default function Logistics() {
       id="logistics"
       style={{
         background: COLORS.sand,
-        padding: "100px 24px",
+        padding: SPACING.section,
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>

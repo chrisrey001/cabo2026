@@ -1,5 +1,6 @@
 import React from "react";
 import Nav from "./components/Nav";
+import { useMobile } from "./hooks/useBreakpoint";
 import Hero from "./sections/Hero";
 import Cast from "./sections/Cast";
 import Villa from "./sections/Villa";
@@ -14,10 +15,11 @@ import Logistics from "./sections/Logistics";
 import CTA from "./sections/CTA";
 
 export default function App() {
+  const isMobile = useMobile();
   return (
     <>
       <Nav />
-      <main>
+      <main style={{ paddingBottom: isMobile ? "calc(56px + env(safe-area-inset-bottom))" : 0 }}>
         <Hero />
         <Cast />
         <Villa />

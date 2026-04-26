@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Plane, Trash2, Plus } from "lucide-react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import EditField from "../components/EditField";
 import { SectionHeader } from "./Cast";
 import { supabase, hasSupabase } from "../supabase";
@@ -157,7 +157,7 @@ export default function Flights() {
       id="flights"
       style={{
         background: COLORS.warmWhite,
-        padding: "100px 24px",
+        padding: SPACING.section,
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>

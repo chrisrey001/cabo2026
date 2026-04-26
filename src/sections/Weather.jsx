@@ -1,5 +1,5 @@
 import React from "react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import CenteredGrid from "../components/CenteredGrid";
 import { useForecast } from "../hooks/useForecast";
@@ -25,7 +25,7 @@ export default function Weather() {
       id="weather"
       style={{
         background: `linear-gradient(135deg, ${COLORS.night} 0%, ${COLORS.indigo} 100%)`,
-        padding: "100px 24px",
+        padding: SPACING.section,
         position: "relative",
         overflow: "hidden",
       }}
@@ -112,7 +112,7 @@ export default function Weather() {
                 <div
                   style={{
                     fontFamily: FONTS.mono,
-                    fontSize: "0.62rem",
+                    fontSize: "0.75rem",
                     color: COLORS.gold,
                     marginTop: 8,
                     lineHeight: 1.5,

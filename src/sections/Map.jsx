@@ -2,8 +2,9 @@ import React, { useRef, useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import { ExternalLink } from "lucide-react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
+import { useMobile } from "../hooks/useBreakpoint";
 
 const PLACES = [
   { id: "villa",    name: "Villa Dos Mares",        cat: "Home Base",   color: COLORS.terracotta, desc: "4BR, 3,059 sq ft — Palmilla Enclave",        query: "Palmilla Enclave Los Cabos Mexico",          lat: 23.0080, lng: -109.7170 },
@@ -50,16 +51,9 @@ const MAP_CENTER = [23.0080, -109.7170];
 
 export default function MapSection() {
   const [activeId, setActiveId] = useState(null);
-  const [isDesktop, setIsDesktop] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= 768 : true
-  );
+  const isMobile = useMobile();
+  const isDesktop = !isMobile;
   const cardRefs = useRef({});
-
-  useEffect(() => {
-    const fn = () => setIsDesktop(window.innerWidth >= 768);
-    window.addEventListener("resize", fn);
-    return () => window.removeEventListener("resize", fn);
-  }, []);
 
   useEffect(() => {
     if (!activeId) return;
@@ -83,7 +77,7 @@ export default function MapSection() {
         permanent={activeId === p.id}
         opacity={1}
       >
-        <span style={{ display: "block", color: p.color, fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.16em", fontFamily: FONTS.sans }}>
+        <span style={{ display: "block", color: p.color, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.16em", fontFamily: FONTS.sans }}>
           {p.cat}
         </span>
         <div style={{ fontFamily: FONTS.display, fontSize: "0.9rem", fontWeight: 700, color: COLORS.night, marginTop: 1 }}>
@@ -94,7 +88,7 @@ export default function MapSection() {
   ));
 
   return (
-    <section id="map" style={{ background: COLORS.sand, padding: "100px 24px" }}>
+    <section id="map" style={{ background: COLORS.sand, padding: SPACING.section }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <SectionHeader eyebrow="The Territory" title="Where We'll Roam" />
 
@@ -142,7 +136,7 @@ export default function MapSection() {
                   >
                     <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: p.color }} />
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontFamily: FONTS.sans, fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.18em", color: p.color }}>
+                      <span style={{ fontFamily: FONTS.sans, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.18em", color: p.color }}>
                         {p.cat}
                       </span>
                       <ExternalLink size={13} color={COLORS.muted} />
@@ -200,7 +194,7 @@ export default function MapSection() {
                   >
                     <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: p.color }} />
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontFamily: FONTS.sans, fontSize: "0.63rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.18em", color: p.color }}>
+                      <span style={{ fontFamily: FONTS.sans, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.18em", color: p.color }}>
                         {p.cat}
                       </span>
                       <ExternalLink size={12} color={COLORS.muted} />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Plus, X, ChevronDown, ChevronUp } from "lucide-react";
-import { COLORS, FONTS } from "../theme";
+import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import { supabase, hasSupabase } from "../supabase";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
@@ -134,7 +134,7 @@ export default function Polls() {
         <VoterModal onConfirm={handleModalConfirm} onDismiss={() => { setShowModal(false); setPendingVote(null); }} />
       )}
 
-      <section id="polls" style={{ background: COLORS.sand, padding: "100px 24px" }}>
+      <section id="polls" style={{ background: COLORS.sand, padding: SPACING.section }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <SectionHeader eyebrow="Group Decisions" title="Polls" />
 
@@ -278,7 +278,7 @@ function PollCard({ poll, votes, voterId, onVote, onToggleClose }) {
         </h3>
         <button
           onClick={onToggleClose}
-          style={{ fontFamily: FONTS.mono, fontSize: "0.65rem", color: poll.closed ? COLORS.terracotta : COLORS.muted, whiteSpace: "nowrap", flexShrink: 0, padding: "3px 8px", borderRadius: 999, background: poll.closed ? "rgba(231,111,81,0.1)" : "rgba(38,70,83,0.06)" }}
+          style={{ fontFamily: FONTS.mono, fontSize: "0.75rem", color: poll.closed ? COLORS.terracotta : COLORS.muted, whiteSpace: "nowrap", flexShrink: 0, padding: "6px 10px", borderRadius: 999, background: poll.closed ? "rgba(231,111,81,0.1)" : "rgba(38,70,83,0.06)" }}
         >
           {poll.closed ? "Closed" : "Close poll"}
         </button>

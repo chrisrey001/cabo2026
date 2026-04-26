@@ -77,10 +77,13 @@ export default function CommentThread({ comments, onAdd }) {
         <input
           ref={inputRef}
           type="text"
+          inputMode="text"
+          enterKeyHint="send"
           placeholder="Add a comment…"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           onKeyDown={onKey}
+          onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "center" }), 100)}
           style={{
             flex: 1,
             fontFamily: FONTS.sans,

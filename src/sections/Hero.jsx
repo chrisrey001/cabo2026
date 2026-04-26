@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import confetti from "canvas-confetti";
-import { COLORS, FONTS, TRIP_START } from "../theme";
+import { COLORS, FONTS, SPACING, TRIP_START } from "../theme";
 import CountdownUnit from "../components/CountdownUnit";
 
 function diff(target) {
@@ -75,7 +75,7 @@ export default function Hero() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "120px 24px 80px",
+        padding: SPACING.sectionHero,
         color: COLORS.foam,
         overflow: "hidden",
         background: `linear-gradient(160deg, ${COLORS.night} 0%, ${COLORS.indigo} 30%, rgba(231,111,81,0.88) 70%, ${COLORS.coral} 100%)`,
@@ -87,8 +87,8 @@ export default function Hero() {
           position: "absolute",
           top: "12%",
           left: "-8%",
-          width: 420,
-          height: 420,
+          width: "clamp(200px, 55vw, 420px)",
+          height: "clamp(200px, 55vw, 420px)",
           borderRadius: "50%",
           background: `radial-gradient(circle, ${COLORS.gold}55 0%, transparent 70%)`,
           filter: "blur(20px)",
@@ -102,8 +102,8 @@ export default function Hero() {
           position: "absolute",
           bottom: "8%",
           right: "-6%",
-          width: 520,
-          height: 520,
+          width: "clamp(220px, 65vw, 520px)",
+          height: "clamp(220px, 65vw, 520px)",
           borderRadius: "50%",
           background: `radial-gradient(circle, ${COLORS.teal}55 0%, transparent 70%)`,
           filter: "blur(20px)",
