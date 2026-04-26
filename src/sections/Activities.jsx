@@ -10,6 +10,7 @@ import CommentThread from "../components/CommentThread";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
+import { useTouchDevice } from "../hooks/useBreakpoint";
 
 const DEFAULT_ACTIVITIES = [
   { title: "Flora Farms Dinner", icon: "🌿", cost: "$80–120/pp", duration: "Evening", distance: "~20 min drive", description: "Michelin-recommended farm-to-table on a 25-acre organic farm in San José del Cabo. Dine under string lights with produce pulled from the ground that morning. One of the hardest reservations in Los Cabos — book 4+ weeks ahead.", tag: "Culinary", sort: 0, link: "https://www.sevenrooms.com/reservations/florafarms" },
@@ -59,6 +60,7 @@ export default function Activities() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const isTouch = useTouchDevice();
   const [confirmingDelete, setConfirmingDelete] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
 
@@ -333,9 +335,9 @@ export default function Activities() {
                         <button
                           onClick={(e) => { e.stopPropagation(); setConfirmingDelete(a.id); }}
                           aria-label="Delete activity"
-                          style={{ flexShrink: 0, opacity: (window.matchMedia("(hover: none)").matches || hoveredCard === a.id) ? 1 : 0, transition: "opacity 0.15s ease", padding: 8, borderRadius: 6, lineHeight: 0, minWidth: 32, minHeight: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+                          style={{ flexShrink: 0, opacity: (isTouch || hoveredCard === a.id) ? 1 : 0, transition: "opacity 0.15s ease", padding: 8, borderRadius: 6, lineHeight: 0, minWidth: 32, minHeight: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
                           onFocus={(e) => (e.currentTarget.style.opacity = "1")}
-                          onBlur={(e) => (e.currentTarget.style.opacity = window.matchMedia("(hover: none)").matches ? "1" : "0")}
+                          onBlur={(e) => (e.currentTarget.style.opacity = isTouch ? "1" : "0")}
                         >
                           <Trash2 size={15} color={COLORS.muted} />
                         </button>

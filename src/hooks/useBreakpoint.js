@@ -1,14 +1,26 @@
 import { useState, useEffect } from "react";
 
-export function useMobile() {
-  const [mobile, setMobile] = useState(
-    typeof window !== "undefined" ? window.innerWidth < 768 : false
+function useMediaQuery(query, initialValue) {
+  const [matches, setMatches] = useState(
+    typeof window !== "undefined" ? window.matchMedia(query).matches : initialValue
   );
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const handler = (e) => setMobile(e.matches);
+    const mq = window.matchMedia(query);
+    const handler = (e) => setMatches(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
-  }, []);
-  return mobile;
+  }, [query]);
+  return matches;
+}
+
+export function useMobile() {
+  return useMediaQuery("(max-width: 767px)", false);
+}
+
+export function useDesktop() {
+  return useMediaQuery("(min-width: 900px)", true);
+}
+
+export function useTouchDevice() {
+  return useMediaQuery("(hover: none)", false);
 }

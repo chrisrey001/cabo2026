@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Menu, X, Home, Building2, Compass, CalendarDays, LayoutGrid } from "lucide-react";
 import { COLORS, FONTS, SECTIONS } from "../theme";
 import SaveBadge from "./SaveBadge";
-import { useMobile } from "../hooks/useBreakpoint";
+import { useMobile, useDesktop } from "../hooks/useBreakpoint";
 
 const BOTTOM_TABS = [
   { id: "hero",       label: "Home",    Icon: Home },
@@ -16,15 +16,15 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const isMobile = useMobile();
-  const [isDesktop, setIsDesktop] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= 900 : true
-  );
+  const isDesktop = useDesktop();
 
+  // Close More sheet if user scrolls manually
   useEffect(() => {
-    const onResize = () => setIsDesktop(window.innerWidth >= 900);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+    if (!moreOpen) return;
+    const close = () => setMoreOpen(false);
+    window.addEventListener("scroll", close, { passive: true, once: true });
+    return () => window.removeEventListener("scroll", close);
+  }, [moreOpen]);
 
   useEffect(() => {
     const targets = SECTIONS.map((s) => document.getElementById(s.id)).filter(Boolean);
