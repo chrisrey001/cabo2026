@@ -6,21 +6,40 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
+const SOURCES = [
+  "airbnb.com",
+  "getyourguide.com",
+  "tripadvisor.com",
+  "viator.com",
+  "cabo-adventures.com",
+];
+
+const FALLBACK_URLS = {
+  "airbnb.com": "https://www.airbnb.com/cabo-san-lucas-mexico/things-to-do",
+  "getyourguide.com": "https://www.getyourguide.com/los-cabos-l264/",
+  "tripadvisor.com": "https://www.tripadvisor.com/Attractions-g152515-Activities-c42-Cabo_San_Lucas_Los_Cabos_Baja_California.html",
+  "viator.com": "https://www.viator.com/Cabo-San-Lucas-d50859",
+  "cabo-adventures.com": "https://www.cabo-adventures.com/en",
+};
+
 const PROMPT = (existingTitles) => `You are helping plan a 6-night trip to Los Cabos for 8 adults (couples in their late 40s–60s — adventurous but also enjoy relaxing, food and drink lovers, a mix of active and laid-back energy).
 
 Trip: June 14–20, 2026 · Villa Dos Mares, Palmilla Enclave (Km 27.5, San José del Cabo — Sea of Cortez side).
 
-Use tavily-search to find diverse, current activities and experiences available within roughly 1 hour's drive of Palmilla Enclave that suit this group in mid-June 2026.
+Use tavily-search to find activities, restricting your searches to these 5 domains only:
+${SOURCES.map((s) => `- ${s}`).join("\n")}
+
+Run multiple searches across these domains to surface a variety of specific activity listings — tours, experiences, excursions — available in Los Cabos in mid-June 2026. Search each domain at least once.
 
 SEASONAL CONSTRAINT — do NOT suggest:
 whale watching, whale shark tours, gray whale tours, humpback whale tours, manta ray snorkeling tours (these are Dec–Mar season only).
 
-Search broadly across types — outdoor adventure, food and drink, culture, day trips, water activities, nightlife, wellness, etc. — and across a range of energy levels and price points. Do not constrain yourself to any specific category or list of activities.
+Pick 5 activities that are diverse in type (adventure, food/drink, culture, water, wellness, nightlife, etc.) and energy level. Prioritize results that are distinct from each other.
 
 Return exactly 5 activities as a JSON array (no markdown, no explanation):
-[{"title":"...","icon":"(emoji)","cost":"$X/pp or range","duration":"X hours","distance":"X min from Palmilla","description":"2 sentences — what it is and why this group will love it.","tag":"Adventure|Culinary|Culture|Sightseeing|Beach|Wellness|Nightlife","link":"URL or null"}]
+[{"title":"...","icon":"(emoji)","cost":"$X/pp or range","duration":"X hours","distance":"X min from Palmilla","description":"2 sentences — what it is and why this group will love it.","tag":"Adventure|Culinary|Culture|Sightseeing|Beach|Wellness|Nightlife","link":"exact URL of the specific listing page from your search results"}]
 
-For each activity, include the best URL you found via search — the operator's own website, a Viator or GetYourGuide listing, or a relevant tourism page. A real URL to any genuinely helpful page is always better than null. Only return null if your search produced no relevant results at all for that specific activity.
+Every activity MUST have a real link — the exact URL of the specific listing page you found in search results. Do not use a homepage or category URL; use the direct link to that activity.
 Avoid duplicating: ${existingTitles || "none yet"}.`;
 
 export const handler = async (event) => {
@@ -68,7 +87,10 @@ export const handler = async (event) => {
         betas: ["mcp-client-2025-04-04"],
       });
     } else {
-      // Fallback: Claude uses training knowledge; null is fine for uncertain links
+      // Fallback: no Tavily — use training knowledge, link to known category pages
+      const fallbackLinks = Object.entries(FALLBACK_URLS)
+        .map(([domain, url]) => `- ${domain}: ${url}`)
+        .join("\n");
       message = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 2048,
@@ -77,7 +99,7 @@ export const handler = async (event) => {
             role: "user",
             content:
               PROMPT(existingTitles) +
-              "\n\n(No live search available — use your training knowledge for descriptions, pricing, and links. Only include a link if you are confident it is a real, current URL for that operator. null is preferred over a guessed link.)",
+              `\n\n(No live search available. Use your training knowledge for titles, descriptions, costs, and durations. For the link field, use the most relevant category URL from this list:\n${fallbackLinks}\nOnly use these URLs as links — do not invent others.)`,
           },
         ],
       });
