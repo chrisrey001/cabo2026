@@ -68,7 +68,7 @@ export const handler = async (event) => {
         betas: ["mcp-client-2025-04-04"],
       });
     } else {
-      // Fallback: Claude uses training knowledge, Viator search links as fallback URLs
+      // Fallback: Claude uses training knowledge; null is fine for uncertain links
       message = await client.messages.create({
         model: "claude-haiku-4-5",
         max_tokens: 2048,
@@ -77,7 +77,7 @@ export const handler = async (event) => {
             role: "user",
             content:
               PROMPT(existingTitles) +
-              "\n\n(No live search available — use your training knowledge. For links, use https://www.viator.com/search?text=ACTIVITY+Los+Cabos as a fallback format if no specific URL is known.)",
+              "\n\n(No live search available — use your training knowledge for descriptions, pricing, and links. Only include a link if you are confident it is a real, current URL for that operator. null is preferred over a guessed link.)",
           },
         ],
       });
