@@ -67,6 +67,8 @@ export const handler = async (event) => {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   // Phase 1 — Tavily. Single narrow search, max 5 results for the chosen category.
+  // search_depth: "basic" — 1 credit/call vs 2 for "advanced", and ~1-3s faster.
+  // Sufficient quality for a curated 4-5 domain whitelist.
   let results;
   try {
     const tavilyRes = await fetch("https://api.tavily.com/search", {
@@ -76,12 +78,20 @@ export const handler = async (event) => {
         api_key: process.env.TAVILY_API_KEY,
         query: config.query,
         include_domains: config.domains,
-        search_depth: "advanced",
+        search_depth: "basic",
         max_results: 5,
       }),
     });
     if (!tavilyRes.ok) {
-      const detail = (await tavilyRes.text()).slice(0, 200);
+      const raw = await tavilyRes.text();
+      let detail = raw.slice(0, 200);
+      try {
+        const body = JSON.parse(raw);
+        detail = body.error || body.detail || body.message || detail;
+      } catch {
+        // Not JSON — keep the raw text snippet.
+      }
+      console.error("[suggest-activities] tavily non-2xx:", { category, status: tavilyRes.status, detail });
       return {
         statusCode: 502,
         headers: CORS,
@@ -90,8 +100,9 @@ export const handler = async (event) => {
     }
     const tavilyData = await tavilyRes.json();
     results = tavilyData.results || [];
+    console.log("[suggest-activities] tavily ok:", { category, count: results.length, first: results[0]?.url });
   } catch (err) {
-    console.error("[suggest-activities] tavily error:", err);
+    console.error("[suggest-activities] tavily error:", { category, message: err.message });
     return {
       statusCode: 502,
       headers: CORS,
@@ -100,6 +111,7 @@ export const handler = async (event) => {
   }
 
   if (results.length === 0) {
+    console.error("[suggest-activities] tavily empty:", { category });
     return {
       statusCode: 502,
       headers: CORS,
@@ -139,14 +151,16 @@ Return exactly 3 picks as a JSON array, no markdown, no commentary:
     });
     textBlock = message.content.filter((b) => b.type === "text").pop();
     if (!textBlock) {
+      console.error("[suggest-activities] anthropic no text block:", { category, stop_reason: message.stop_reason });
       return {
         statusCode: 502,
         headers: CORS,
         body: JSON.stringify({ error: "No text content in Claude response", stage: "anthropic" }),
       };
     }
+    console.log("[suggest-activities] anthropic ok:", { category, stop_reason: message.stop_reason, text_len: textBlock.text.length });
   } catch (err) {
-    console.error("[suggest-activities] anthropic error:", err);
+    console.error("[suggest-activities] anthropic error:", { category, message: err.message });
     return {
       statusCode: 502,
       headers: CORS,
@@ -162,7 +176,7 @@ Return exactly 3 picks as a JSON array, no markdown, no commentary:
     picks = JSON.parse(match[0]);
     if (!Array.isArray(picks)) throw new Error("Parsed value is not an array");
   } catch (err) {
-    console.error("[suggest-activities] parse error:", err, "text:", textBlock.text.slice(0, 500));
+    console.error("[suggest-activities] parse error:", { category, message: err.message, text: textBlock.text.slice(0, 500) });
     return {
       statusCode: 502,
       headers: CORS,
