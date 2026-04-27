@@ -60,6 +60,7 @@ export default function Activities() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const isTouch = useTouchDevice();
   const [confirmingDelete, setConfirmingDelete] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -203,13 +204,14 @@ export default function Activities() {
     }
   }, [activities, hasSupabase]);
 
-  const handleSuggest = async () => {
+  const handleSuggest = async (category) => {
+    setShowCategoryPicker(false);
     setLoadingSuggestions(true);
     try {
       const res = await fetch("/.netlify/functions/suggest-activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activities }),
+        body: JSON.stringify({ activities, category }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Request failed");
@@ -406,13 +408,41 @@ export default function Activities() {
                 </button>
               </div>
             </div>
+          ) : showCategoryPicker ? (
+            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+              <p style={{ fontFamily: FONTS.sans, fontSize: "0.82rem", fontWeight: 600, color: COLORS.muted, margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                What are you looking for?
+              </p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                {[
+                  { id: "adventures", label: "Adventures", emoji: "🏄" },
+                  { id: "experiences", label: "Experiences", emoji: "✨" },
+                  { id: "restaurants", label: "Restaurants", emoji: "🍽" },
+                  { id: "nightlife", label: "Nightlife", emoji: "🌙" },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleSuggest(cat.id)}
+                    disabled={loadingSuggestions}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "11px 20px", border: `2px solid ${COLORS.gold}`, borderRadius: 999, color: COLORS.indigo, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.88rem", background: "transparent", transition: "background 0.15s ease", cursor: "pointer" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(233,196,106,0.12)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    {cat.emoji} {cat.label}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setShowCategoryPicker(false)} style={{ fontFamily: FONTS.sans, fontSize: "0.78rem", color: COLORS.muted, padding: "4px 10px" }}>
+                Cancel
+              </button>
+            </div>
           ) : (
             <div style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
               <button onClick={() => setShowForm(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", border: `2px dashed ${COLORS.teal}`, borderRadius: 999, color: COLORS.teal, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.9rem", background: "transparent", transition: "background 0.2s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(42,157,143,0.08)")} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                 <Plus size={16} /> Add an Experience
               </button>
               <button
-                onClick={handleSuggest}
+                onClick={() => setShowCategoryPicker(true)}
                 disabled={loadingSuggestions}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", border: `2px dashed ${COLORS.gold}`, borderRadius: 999, color: COLORS.indigo, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.9rem", background: "transparent", transition: "background 0.2s ease", opacity: loadingSuggestions ? 0.65 : 1 }}
                 onMouseEnter={(e) => { if (!loadingSuggestions) e.currentTarget.style.background = "rgba(233,196,106,0.12)"; }}
