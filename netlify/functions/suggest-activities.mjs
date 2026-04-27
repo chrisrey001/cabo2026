@@ -6,26 +6,21 @@ const CORS = {
   "Content-Type": "application/json",
 };
 
-// Per-category search configs — different queries and domains for each intent.
-// A single generic query hitting all activity sites is why restaurants and
-// nightlife never appeared before.
-const CATEGORY_CONFIG = {
-  adventures: {
-    query: "tours excursions adventures booking Los Cabos 2026",
-    domains: ["viator.com", "getyourguide.com", "cabo-adventures.com", "tripadvisor.com"],
-  },
-  experiences: {
-    query: "Los Cabos unique experiences local hosts 2026",
-    domains: ["airbnb.com", "viator.com", "getyourguide.com", "withlocals.com"],
-  },
-  restaurants: {
-    query: "best restaurants Cabo San Lucas San Jose del Cabo 2026 reviews",
-    domains: ["theinfatuation.com", "eater.com", "opentable.com", "tripadvisor.com", "cntraveler.com"],
-  },
-  nightlife: {
-    query: "best bars nightlife Cabo San Lucas 2026 reviews",
-    domains: ["theinfatuation.com", "tripadvisor.com", "timeout.com", "cntraveler.com"],
-  },
+const SOURCES = [
+  "airbnb.com",
+  "getyourguide.com",
+  "tripadvisor.com",
+  "viator.com",
+  "cabo-adventures.com",
+];
+
+const FALLBACK_URLS = {
+  "airbnb.com": "https://www.airbnb.com/cabo-san-lucas-mexico/things-to-do",
+  "getyourguide.com": "https://www.getyourguide.com/los-cabos-l264/",
+  "tripadvisor.com":
+    "https://www.tripadvisor.com/Attractions-g152515-Activities-c42-Cabo_San_Lucas_Los_Cabos_Baja_California.html",
+  "viator.com": "https://www.viator.com/Cabo-San-Lucas-d50859",
+  "cabo-adventures.com": "https://www.cabo-adventures.com/en",
 };
 
 const GROUP_HEADER = `You are helping plan a 6-night trip to Los Cabos for 8 adults (couples in their late 40s–60s — adventurous but also enjoy relaxing, food and drink lovers, a mix of active and laid-back energy).
@@ -35,157 +30,137 @@ Trip: June 14–20, 2026 · Villa Dos Mares, Palmilla Enclave (Km 27.5, San Jos�
 const SEASONAL_CONSTRAINT = `SEASONAL CONSTRAINT — do NOT suggest:
 whale watching, whale shark tours, gray whale tours, humpback whale tours, manta ray snorkeling tours (these are Dec–Mar season only).`;
 
-// Claude returns source_index (an integer) — code looks up the URL from the
-// original Tavily array. Claude never produces a URL string, so hallucination
-// is structurally impossible regardless of how long or complex the URL is.
-const RANKING_TOOL = {
-  name: "rank_activities",
-  description: "Select the best activities from the provided listings.",
-  input_schema: {
-    type: "object",
-    properties: {
-      selections: {
-        type: "array",
-        minItems: 1,
-        maxItems: 5,
-        items: {
-          type: "object",
-          properties: {
-            source_index: {
-              type: "integer",
-              description: "0-based index of the chosen listing in the input array.",
-            },
-            title: { type: "string" },
-            icon: { type: "string", description: "Single emoji." },
-            cost: { type: "string", description: "e.g. '$80/pp', '$150–200/pp', or 'Free'." },
-            duration: { type: "string", description: "e.g. '3 hours', 'Half day', 'Evening'." },
-            distance: { type: "string", description: "Travel time from Palmilla, e.g. '15 min from Palmilla'." },
-            description: { type: "string", description: "Two sentences: what it is and why this group will love it." },
-            tag: {
-              type: "string",
-              enum: ["Adventure", "Culinary", "Culture", "Sightseeing", "Beach", "Wellness", "Nightlife"],
-            },
-          },
-          required: ["source_index", "title", "icon", "cost", "duration", "distance", "description", "tag"],
-        },
-      },
-    },
-    required: ["selections"],
-  },
-};
+const OUTPUT_FORMAT = (existingTitles) =>
+  `Return exactly 5 activities as a JSON array (no markdown, no explanation):
+[{"title":"...","icon":"(emoji)","cost":"$X/pp or range","duration":"X hours","distance":"X min from Palmilla","description":"2 sentences — what it is and why this group will love it.","tag":"Adventure|Culinary|Culture|Sightseeing|Beach|Wellness|Nightlife","link":"..."}]
+Avoid duplicating: ${existingTitles || "none yet"}.`;
 
 export const handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS, body: "" };
   }
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
+    return {
+      statusCode: 405,
+      headers: CORS,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
   }
+
   if (!process.env.ANTHROPIC_API_KEY) {
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }) };
-  }
-  if (!process.env.TAVILY_API_KEY) {
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "TAVILY_API_KEY not configured" }) };
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
+    };
   }
 
   let activities = [];
-  let category = "adventures";
   try {
-    const body = JSON.parse(event.body || "{}");
-    activities = body.activities || [];
-    category = body.category || "adventures";
+    ({ activities } = JSON.parse(event.body || "{}"));
   } catch {
-    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "Invalid request body" }) };
+    return {
+      statusCode: 400,
+      headers: CORS,
+      body: JSON.stringify({ error: "Invalid request body" }),
+    };
   }
 
-  const config = CATEGORY_CONFIG[category];
-  if (!config) {
-    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: `Unknown category: ${category}` }) };
-  }
+  const existingTitles = (activities || [])
+    .map((a) => a.title)
+    .filter(Boolean)
+    .join(", ");
 
-  const existingTitles = activities.map((a) => a.title).filter(Boolean).join(", ");
+  const hasTavily = !!process.env.TAVILY_API_KEY;
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   try {
-    // Phase 1: Tavily fetches — code-controlled, Claude not involved.
-    const tavilyRes = await fetch("https://api.tavily.com/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        api_key: process.env.TAVILY_API_KEY,
-        query: config.query,
-        include_domains: config.domains,
-        search_depth: "advanced",
-        max_results: 15,
-      }),
-    });
-    const tavilyData = await tavilyRes.json();
-    const results = tavilyData.results || [];
+    let promptContent;
 
-    if (results.length === 0) {
-      return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: "No results from search" }) };
-    }
+    if (hasTavily) {
+      // Phase 1: Code runs all searches — Tavily fetches, Claude never touches the web
+      const searchResults = await Promise.all(
+        SOURCES.map((domain) =>
+          fetch("https://api.tavily.com/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              api_key: process.env.TAVILY_API_KEY,
+              query: "tours activities experiences Los Cabos",
+              include_domains: [domain],
+              search_depth: "advanced",
+              max_results: 5,
+            }),
+          })
+            .then((r) => r.json())
+            .catch(() => ({ results: [] }))
+        )
+      );
 
-    // Indexed listing format — the [N] prefix is what Claude references in
-    // source_index. Explicit and unambiguous.
-    const listings = results
-      .map((r, i) => `[${i}] ${r.title}\n    URL: ${r.url}\n    About: ${(r.content || "").slice(0, 400)}`)
-      .join("\n\n");
+      const listings = searchResults
+        .flatMap((res, i) =>
+          (res.results || []).map(
+            (r) =>
+              `[${SOURCES[i]}]\nTitle: ${r.title}\nURL: ${r.url}\nAbout: ${(r.content || "").slice(0, 300)}`
+          )
+        )
+        .join("\n\n");
 
-    // Phase 2: Claude ranks via tool use — no URL strings produced by the model.
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2000,
-      tools: [RANKING_TOOL],
-      tool_choice: { type: "tool", name: "rank_activities" },
-      messages: [
-        {
-          role: "user",
-          content: `${GROUP_HEADER}
+      // Phase 2: Claude analyzes results — no tools, no web access, URLs must come from listings
+      promptContent = `${GROUP_HEADER}
+
+Below are real activity listings pulled from 5 booking sites. Analyze them and select 5 that are diverse in type and best suit this group for mid-June 2026.
 
 ${SEASONAL_CONSTRAINT}
 
-Below are ${results.length} ${category} listings from real booking and review sites. Pick the best ones for this group — up to 5, diverse in type.
-
-Prioritize:
-- Specific bookable experiences over generic listicle pages
-- Variety across your picks
-- Quality and relevance to the group
-
-Avoid duplicating: ${existingTitles || "none"}.
-
 LISTINGS:
-${listings}`,
-        },
-      ],
+${listings}
+
+${OUTPUT_FORMAT(existingTitles).replace('"link":"..."', '"link":"exact URL from the listings above"')}
+
+Use only URLs that appear in the listings above. Do not modify or invent URLs.`;
+    } else {
+      // Fallback: no Tavily — Claude uses training knowledge, links to known category pages
+      const fallbackLinks = Object.entries(FALLBACK_URLS)
+        .map(([domain, url]) => `- ${domain}: ${url}`)
+        .join("\n");
+
+      promptContent = `${GROUP_HEADER}
+
+${SEASONAL_CONSTRAINT}
+
+Suggest 5 diverse activities available in Los Cabos in mid-June 2026. Use your training knowledge for titles, descriptions, costs, and durations.
+
+${OUTPUT_FORMAT(existingTitles).replace('"link":"..."', '"link":"most relevant category URL from the list below"')}
+
+For the link field, use only URLs from this list — do not invent others:
+${fallbackLinks}`;
+    }
+
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: promptContent }],
     });
 
-    const toolUse = message.content.find((b) => b.type === "tool_use");
-    if (!toolUse) throw new Error("No tool call in response");
+    const textBlock = message.content.filter((b) => b.type === "text").pop();
+    if (!textBlock) throw new Error("No text content in response");
 
-    // Hydrate URLs from the Tavily source array — Claude said "index 7",
-    // we look up results[7].url. The URL is verbatim from Tavily, untouched.
-    const suggestions = toolUse.input.selections
-      .map((sel) => {
-        const source = results[sel.source_index];
-        if (!source) return null;
-        return {
-          title: sel.title,
-          icon: sel.icon,
-          cost: sel.cost,
-          duration: sel.duration,
-          distance: sel.distance,
-          description: sel.description,
-          tag: sel.tag,
-          link: source.url,
-          source_domain: new URL(source.url).hostname.replace(/^www\./, ""),
-        };
-      })
-      .filter(Boolean);
+    const match = textBlock.text.trim().match(/\[[\s\S]*\]/);
+    if (!match) throw new Error("No JSON array found in response");
 
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ suggestions }) };
+    const suggestions = JSON.parse(match[0]);
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({ suggestions }),
+    };
   } catch (err) {
     console.error("[suggest-activities] error:", err);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "Failed to generate suggestions" }) };
+    return {
+      statusCode: 500,
+      headers: CORS,
+      body: JSON.stringify({ error: "Failed to generate suggestions" }),
+    };
   }
 };
