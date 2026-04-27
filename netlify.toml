@@ -9,6 +9,9 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[functions."suggest-activities"]
+  timeout = 26
+
 # SPA fallback — all routes serve index.html.
 [[redirects]]
   from = "/*"

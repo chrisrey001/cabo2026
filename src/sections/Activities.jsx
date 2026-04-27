@@ -219,7 +219,7 @@ export default function Activities() {
       setShowSuggestModal(true);
     } catch (err) {
       console.error("[cabo2026] suggest-activities error:", err);
-      alert("Couldn't load suggestions right now. Please try again in a moment.");
+      alert(`Couldn't load suggestions: ${err.message}`);
     } finally {
       setLoadingSuggestions(false);
     }
@@ -439,7 +439,7 @@ export default function Activities() {
           ) : (
             <div style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
               <button onClick={() => setShowForm(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", border: `2px dashed ${COLORS.teal}`, borderRadius: 999, color: COLORS.teal, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.9rem", background: "transparent", transition: "background 0.2s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(42,157,143,0.08)")} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                <Plus size={16} /> Add an Experience
+                <Plus size={16} /> Manually Enter Activity
               </button>
               <button
                 onClick={() => setShowCategoryPicker(true)}
@@ -449,7 +449,7 @@ export default function Activities() {
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 <Sparkles size={16} color={COLORS.gold} />
-                {loadingSuggestions ? "Thinking…" : "Suggest ideas"}
+                {loadingSuggestions ? "Generating…" : "Generate Ideas with AI"}
               </button>
             </div>
           )}
