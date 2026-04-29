@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Menu, X, Home, Building2, Compass, CalendarDays, LayoutGrid } from "lucide-react";
 import { COLORS, FONTS, SECTIONS } from "../theme";
 import SaveBadge from "./SaveBadge";
+import TripCountdownPill from "./TripCountdownPill";
 import { useMobile, useDesktop } from "../hooks/useBreakpoint";
 
 const BOTTOM_TABS = [
@@ -79,23 +80,26 @@ export default function Nav() {
             gap: 16,
           }}
         >
-          <button
-            onClick={() => scrollTo("hero")}
-            style={{ display: "flex", alignItems: "center", gap: 10, padding: 0 }}
-          >
-            <span
-              style={{
-                fontFamily: FONTS.display,
-                fontWeight: 900,
-                fontSize: "1.35rem",
-                color: COLORS.indigo,
-                letterSpacing: "-0.01em",
-              }}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <button
+              onClick={() => scrollTo("hero")}
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: 0 }}
             >
-              Cabo <span style={{ color: COLORS.terracotta }}>'26</span>
-            </span>
-            <SaveBadge />
-          </button>
+              <span
+                style={{
+                  fontFamily: FONTS.display,
+                  fontWeight: 900,
+                  fontSize: "1.35rem",
+                  color: COLORS.indigo,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Cabo <span style={{ color: COLORS.terracotta }}>'26</span>
+              </span>
+              <SaveBadge />
+            </button>
+            <TripCountdownPill />
+          </div>
 
           {isDesktop ? (
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
