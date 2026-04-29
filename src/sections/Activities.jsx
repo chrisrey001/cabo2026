@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { ChevronDown, ExternalLink, Heart, Plus, Sparkles, Trash2 } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
+import { ChevronDown, ExternalLink, Heart, Plus, Trash2 } from "lucide-react";
 import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import EditField from "../components/EditField";
 import VoterModal from "../components/VoterModal";
 import VoterPills from "../components/VoterPills";
-import SuggestionsModal from "../components/SuggestionsModal";
 import CommentThread from "../components/CommentThread";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
@@ -57,10 +56,6 @@ export default function Activities() {
   const [form, setForm] = useState(BLANK_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [comments, setComments] = useState([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestModal, setShowSuggestModal] = useState(false);
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const isTouch = useTouchDevice();
   const [confirmingDelete, setConfirmingDelete] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -191,40 +186,6 @@ export default function Activities() {
     }
   };
 
-  const addActivityFromSuggestion = useCallback(async (s) => {
-    const nextSort = activities.length ? Math.max(...activities.map((a) => a.sort ?? 0)) + 1 : 0;
-    const draft = { title: s.title || "", icon: s.icon || "✨", cost: s.cost || "", duration: s.duration || "", distance: s.distance || "", description: s.description || "", tag: s.tag || "Adventure", link: s.link || "", sort: nextSort, added_by: "Claude ✨" };
-    if (!hasSupabase) {
-      setActivities((prev) => [...prev, { ...draft, id: `local-${Date.now()}` }]);
-    } else {
-      emitSave("saving");
-      const { data, error } = await supabase.from("activities").insert(draft).select().single();
-      if (error) { console.error("[cabo2026] activity insert (AI) failed:", error); emitSave("error"); }
-      else { setActivities((prev) => [...prev, data]); emitSave("saved"); }
-    }
-  }, [activities, hasSupabase]);
-
-  const handleSuggest = async (category) => {
-    setShowCategoryPicker(false);
-    setLoadingSuggestions(true);
-    try {
-      const res = await fetch("/.netlify/functions/suggest-activities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activities, category }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Request failed");
-      setSuggestions(json.suggestions || []);
-      setShowSuggestModal(true);
-    } catch (err) {
-      console.error("[cabo2026] suggest-activities error:", err);
-      alert(`Couldn't load suggestions: ${err.message}`);
-    } finally {
-      setLoadingSuggestions(false);
-    }
-  };
-
   const sorted = useMemo(() => {
     const arr = [...activities];
     if (sortKey === "votes") arr.sort((a, b) => voteCount(b.id) - voteCount(a.id));
@@ -237,13 +198,6 @@ export default function Activities() {
     <>
       {showModal && (
         <VoterModal onConfirm={handleModalConfirm} onDismiss={() => { setShowModal(false); setPendingVote(null); }} />
-      )}
-      {showSuggestModal && suggestions.length > 0 && (
-        <SuggestionsModal
-          suggestions={suggestions}
-          onAdd={addActivityFromSuggestion}
-          onClose={() => { setShowSuggestModal(false); setSuggestions([]); }}
-        />
       )}
       <section id="activities" style={{ background: COLORS.warmWhite, padding: SPACING.section }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
@@ -408,48 +362,10 @@ export default function Activities() {
                 </button>
               </div>
             </div>
-          ) : showCategoryPicker ? (
-            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-              <p style={{ fontFamily: FONTS.sans, fontSize: "0.82rem", fontWeight: 600, color: COLORS.muted, margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                What are you looking for?
-              </p>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-                {[
-                  { id: "adventures", label: "Adventures", emoji: "🏄" },
-                  { id: "experiences", label: "Experiences", emoji: "✨" },
-                  { id: "restaurants", label: "Restaurants", emoji: "🍽" },
-                  { id: "nightlife", label: "Nightlife", emoji: "🌙" },
-                ].map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleSuggest(cat.id)}
-                    disabled={loadingSuggestions}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "11px 20px", border: `2px solid ${COLORS.gold}`, borderRadius: 999, color: COLORS.indigo, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.88rem", background: "transparent", transition: "background 0.15s ease", cursor: "pointer" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(233,196,106,0.12)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    {cat.emoji} {cat.label}
-                  </button>
-                ))}
-              </div>
-              <button onClick={() => setShowCategoryPicker(false)} style={{ fontFamily: FONTS.sans, fontSize: "0.78rem", color: COLORS.muted, padding: "4px 10px" }}>
-                Cancel
-              </button>
-            </div>
           ) : (
-            <div style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ marginTop: 20, display: "flex", justifyContent: "center" }}>
               <button onClick={() => setShowForm(true)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", border: `2px dashed ${COLORS.teal}`, borderRadius: 999, color: COLORS.teal, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.9rem", background: "transparent", transition: "background 0.2s ease" }} onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(42,157,143,0.08)")} onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                <Plus size={16} /> Manually Enter Activity
-              </button>
-              <button
-                onClick={() => setShowCategoryPicker(true)}
-                disabled={loadingSuggestions}
-                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 22px", border: `2px dashed ${COLORS.gold}`, borderRadius: 999, color: COLORS.indigo, fontFamily: FONTS.sans, fontWeight: 600, fontSize: "0.9rem", background: "transparent", transition: "background 0.2s ease", opacity: loadingSuggestions ? 0.65 : 1 }}
-                onMouseEnter={(e) => { if (!loadingSuggestions) e.currentTarget.style.background = "rgba(233,196,106,0.12)"; }}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-              >
-                <Sparkles size={16} color={COLORS.gold} />
-                {loadingSuggestions ? "Generating…" : "Generate Ideas with AI"}
+                <Plus size={16} /> Add Activity
               </button>
             </div>
           )}
