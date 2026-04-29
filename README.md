@@ -50,6 +50,7 @@ files in order:
 2. [`supabase/phase2_migration.sql`](supabase/phase2_migration.sql) — voting tables (`polls`, `votes`, `restaurants`, `restaurant_votes`, `activities`, `activity_votes`).
 3. [`supabase/phase3_migration.sql`](supabase/phase3_migration.sql) — `activity_comments` table.
 4. [`supabase/activity_link_migration.sql`](supabase/activity_link_migration.sql) — adds the booking-`link` column to activities.
+5. [`supabase/phase4_migration.sql`](supabase/phase4_migration.sql) — adds `confirmed_by` + `confirmed_at` columns to activities and restaurants for the reservation tracker.
 
 Every migration uses `if not exists` / `add column if not exists`, so they're safe to re-run.
 
@@ -131,10 +132,10 @@ All 12 sections, sticky-nav tracked:
 | 4 | Flights | **Supabase** (`flights`) | Editable per-couple outbound + return |
 | 5 | Weather | **Open-Meteo API** | Live 7-day forecast + sunrise/sunset, fallback array |
 | 6 | Map | static + Leaflet | Interactive pins ↔ place cards, hover-glow + click-pan |
-| 7 | Experiences & Adventures | **Supabase** (`activities` + `activity_votes` + `activity_comments`) | Editable, votable, comment threads, sort by votes/tag/cost |
+| 7 | Experiences & Adventures | **Supabase** (`activities` + `activity_votes` + `activity_comments`) | Editable, votable, comment threads, sort by votes/tag/cost, mark-as-booked tracker |
 | 8 | Itinerary | **Supabase** (`days`) | Editable day-by-day with timeline events |
 | 9 | Polls | **Supabase** (`polls` + `votes`) | Create polls, vote, live counts, who-voted pills |
-| 10 | Dining Guide | **Supabase** (`restaurants` + `restaurant_votes`) | Editable, votable, sort by name/cost/distance/votes, tap-to-call |
+| 10 | Dining Guide | **Supabase** (`restaurants` + `restaurant_votes`) | Editable, votable, sort by name/cost/distance/votes, tap-to-call, mark-as-booked tracker |
 | 11 | Logistics | static | Expandable cards · USD/MXN currency widget · phone copy buttons |
 | 12 | Let's Go | static | Gradient footer with confetti "I'm In" button |
 

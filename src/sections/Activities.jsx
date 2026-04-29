@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { ChevronDown, ExternalLink, Heart, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, Circle, ExternalLink, Heart, Plus, Trash2 } from "lucide-react";
 import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import EditField from "../components/EditField";
@@ -46,6 +46,7 @@ export default function Activities() {
   const [sortKey, setSortKey] = useState("votes");
   const [showModal, setShowModal] = useState(false);
   const [pendingVote, setPendingVote] = useState(null);
+  const [pendingBook, setPendingBook] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -129,10 +130,35 @@ export default function Activities() {
     }
   };
 
+  const toggleBooking = (id, name) => {
+    const row = activities.find((a) => a.id === id);
+    if (!row) return;
+    if (row.confirmed_by) {
+      updateOne(id, { confirmed_by: null, confirmed_at: null });
+    } else {
+      updateOne(id, { confirmed_by: name || "Anonymous", confirmed_at: new Date().toISOString() });
+    }
+  };
+
+  const handleBookClick = (id) => {
+    const row = activities.find((a) => a.id === id);
+    if (row?.confirmed_by) {
+      toggleBooking(id);
+      return;
+    }
+    if (!hasName) {
+      setPendingBook(id);
+      setShowModal(true);
+    } else {
+      toggleBooking(id, voterName);
+    }
+  };
+
   const handleModalConfirm = (name) => {
     setShowModal(false);
     if (name) setVoterName(name);
     if (pendingVote) { castVote(pendingVote, name || voterName || null); setPendingVote(null); }
+    if (pendingBook) { toggleBooking(pendingBook, name || voterName || null); setPendingBook(null); }
   };
 
   const addActivity = async () => {
@@ -191,7 +217,7 @@ export default function Activities() {
   return (
     <>
       {showModal && (
-        <VoterModal onConfirm={handleModalConfirm} onDismiss={() => { setShowModal(false); setPendingVote(null); }} />
+        <VoterModal onConfirm={handleModalConfirm} onDismiss={() => { setShowModal(false); setPendingVote(null); setPendingBook(null); }} />
       )}
       <section id="activities" style={{ background: COLORS.warmWhite, padding: SPACING.section }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
@@ -255,6 +281,14 @@ export default function Activities() {
                               <span style={{ fontFamily: FONTS.sans, fontSize: "0.72rem", color: COLORS.muted }}>💬 {cc}</span>
                             </>
                           )}
+                          {!open && a.confirmed_by && (
+                            <>
+                              <span aria-hidden>·</span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: FONTS.sans, fontSize: "0.72rem", color: COLORS.teal, fontWeight: 600 }}>
+                                <CheckCircle2 size={12} /> Booked by {a.confirmed_by}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </button>
                       {/* Vote button */}
@@ -313,6 +347,21 @@ export default function Activities() {
                             >
                               <ExternalLink size={11} /> Book
                             </a>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+                          <button
+                            onClick={() => handleBookClick(a.id)}
+                            aria-label={a.confirmed_by ? `Unmark booked (currently booked by ${a.confirmed_by})` : "Mark this experience as booked"}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, background: a.confirmed_by ? "rgba(42,157,143,0.12)" : "rgba(38,70,83,0.05)", color: a.confirmed_by ? COLORS.teal : COLORS.muted, fontFamily: FONTS.sans, fontSize: "0.8rem", fontWeight: 600, transition: "all 0.15s ease" }}
+                          >
+                            {a.confirmed_by ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+                            {a.confirmed_by ? `Booked by ${a.confirmed_by}` : "Mark as booked"}
+                          </button>
+                          {a.confirmed_at && a.confirmed_by && (
+                            <span style={{ fontFamily: FONTS.mono, fontSize: "0.72rem", color: COLORS.muted }}>
+                              {new Date(a.confirmed_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                            </span>
                           )}
                         </div>
                         {voters.length > 0 && (
