@@ -171,7 +171,19 @@ data, vote counts, add new.
 
 ## Phase 3 — Delight, polish, and AI
 
-### 3.1 · AI idea generator for Experiences — M
+### 3.1 · ~~AI idea generator for Experiences~~ — REMOVED (PR #2, Apr 2026)
+
+> Built then ripped out. ~13 commits added a Tavily + Claude Sonnet
+> "Suggest more ideas" flow with a category picker and a preview modal.
+> It worked but added a fragile dependency on two API keys (Tavily,
+> Anthropic) and proved overkill for a single-trip site. Removed in PR #2.
+> Manual "Add Activity" remains and covers the actual use case.
+>
+> Original spec preserved below for posterity:
+
+<details>
+<summary>Original 3.1 spec (no longer pursued)</summary>
+
 *Prereq: 2.3 complete so there's a table to insert into.*
 
 **The flow:**
@@ -198,6 +210,8 @@ shipped to the browser. Put it in a Netlify Function.
 
 **Done when:** Clicking "Suggest more ideas" produces 3–5 contextually
 plausible suggestions we can add with one click.
+
+</details>
 
 ### 3.2 · Comment threads on Experiences — M
 *Complements 2.3.*
@@ -265,10 +279,9 @@ grid without breaking mobile layout.
 
 ## 🗝️ Open decisions — answer tomorrow before starting
 
-1. **AI provider for 3.1.** Default recommendation: **Claude API**
-   (Anthropic) — good at structured JSON, trip-planning reasoning is
-   strong, you already have account access. Alternative: OpenAI. I'll
-   proceed with Claude unless you say otherwise.
+1. ~~**AI provider for 3.1.**~~ Resolved: Claude was chosen, the feature
+   was built (Tavily + Claude Sonnet), then removed in PR #2 because
+   the complexity wasn't worth the value for a single-trip site.
 
 2. **Villa photos for 3.4.** Inspirato's listing images can't be
    scraped (auth-walled + ToS issues). Three options:
@@ -344,7 +357,7 @@ Copy a checkmark as you ship each item:
 - [x] 2.3 Experiences & Adventures redesign
 
 ### Phase 3
-- [x] 3.1 AI idea generator
+- [~] 3.1 AI idea generator — built, then removed (PR #2)
 - [x] 3.2 Comment threads
 - [x] 3.3 Interactive map
 - [x] 3.4 Villa photo carousel
