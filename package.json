@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.91.0",
     "@supabase/supabase-js": "^2.45.4",
     "canvas-confetti": "^1.9.3",
     "embla-carousel-react": "^8.6.0",

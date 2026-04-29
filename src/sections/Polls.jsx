@@ -67,17 +67,18 @@ export default function Polls() {
 
   const castVote = async (pollId, optionId, name) => {
     const row = { poll_id: pollId, option_id: optionId, voter_id: voterId, voter_name: name || null };
+    const optimisticId = `local-${Date.now()}`;
     // optimistic
     setVotes((prev) => {
       const without = prev.filter((v) => !(v.poll_id === pollId && v.voter_id === voterId));
-      return [...without, { ...row, id: `local-${Date.now()}` }];
+      return [...without, { ...row, id: optimisticId }];
     });
     if (!hasSupabase) return;
     const { error } = await supabase.from("votes").upsert(row, { onConflict: "poll_id,voter_id" });
     if (error) {
       console.error("[cabo2026] vote failed:", error);
       // rollback
-      setVotes((prev) => prev.filter((v) => v.id !== `local-${Date.now()}`));
+      setVotes((prev) => prev.filter((v) => v.id !== optimisticId));
     }
   };
 
