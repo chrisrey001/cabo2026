@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { UtensilsCrossed, Clock, MapPin, Phone, Navigation, Heart, Plus } from "lucide-react";
+import { UtensilsCrossed, Clock, MapPin, Phone, Navigation, Heart, Plus, CheckCircle2, Circle } from "lucide-react";
 import { COLORS, FONTS, SPACING } from "../theme";
 import { SectionHeader } from "./Cast";
 import EditField from "../components/EditField";
@@ -37,6 +37,7 @@ export default function Dining() {
   const [sortKey, setSortKey] = useState("name");
   const [showModal, setShowModal] = useState(false);
   const [pendingVote, setPendingVote] = useState(null); // restaurantId
+  const [pendingBook, setPendingBook] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -116,10 +117,35 @@ export default function Dining() {
     }
   };
 
+  const toggleBooking = (id, name) => {
+    const row = restaurants.find((r) => r.id === id);
+    if (!row) return;
+    if (row.confirmed_by) {
+      updateOne(id, { confirmed_by: null, confirmed_at: null });
+    } else {
+      updateOne(id, { confirmed_by: name || "Anonymous", confirmed_at: new Date().toISOString() });
+    }
+  };
+
+  const handleBookClick = (id) => {
+    const row = restaurants.find((r) => r.id === id);
+    if (row?.confirmed_by) {
+      toggleBooking(id);
+      return;
+    }
+    if (!hasName) {
+      setPendingBook(id);
+      setShowModal(true);
+    } else {
+      toggleBooking(id, voterName);
+    }
+  };
+
   const handleModalConfirm = (name) => {
     setShowModal(false);
     if (name) setVoterName(name);
     if (pendingVote) { castVote(pendingVote, name || voterName || null); setPendingVote(null); }
+    if (pendingBook) { toggleBooking(pendingBook, name || voterName || null); setPendingBook(null); }
   };
 
   const addRestaurant = async () => {
@@ -151,7 +177,7 @@ export default function Dining() {
   return (
     <>
       {showModal && (
-        <VoterModal onConfirm={handleModalConfirm} onDismiss={() => { setShowModal(false); setPendingVote(null); }} />
+        <VoterModal onConfirm={handleModalConfirm} onDismiss={() => { setShowModal(false); setPendingVote(null); setPendingBook(null); }} />
       )}
       <section id="dining" style={{ background: COLORS.warmWhite, padding: SPACING.section }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -184,6 +210,7 @@ export default function Dining() {
                   voters={rvotes.filter((v) => v.restaurant_id === r.id)}
                   onUpdate={(patch) => updateOne(r.id, patch)}
                   onVote={() => handleVoteClick(r.id)}
+                  onBook={() => handleBookClick(r.id)}
                 />
               ))}
             </CenteredGrid>
@@ -221,7 +248,7 @@ export default function Dining() {
   );
 }
 
-function DiningCard({ r, voteCount, myVoted, voters, onUpdate, onVote }) {
+function DiningCard({ r, voteCount, myVoted, voters, onUpdate, onVote, onBook }) {
   const [showVoters, setShowVoters] = useState(false);
   const telHref = `tel:${(r.phone || "").replace(/[^+\d]/g, "")}`;
   const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${r.name} Los Cabos`)}`;
@@ -279,6 +306,22 @@ function DiningCard({ r, voteCount, myVoted, voters, onUpdate, onVote }) {
           <span aria-hidden style={{ fontSize: "0.9rem" }}>📋</span>
           <EditField value={r.book} onChange={(v) => onUpdate({ book: v })} placeholder="How to book" ariaLabel="How to book" />
         </div>
+      </div>
+
+      <div style={{ padding: "10px 22px 14px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <button
+          onClick={onBook}
+          aria-label={r.confirmed_by ? `Unmark booked (currently booked by ${r.confirmed_by})` : "Mark this restaurant as booked"}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, background: r.confirmed_by ? "rgba(42,157,143,0.12)" : "rgba(38,70,83,0.05)", color: r.confirmed_by ? COLORS.teal : COLORS.muted, fontFamily: FONTS.sans, fontSize: "0.8rem", fontWeight: 600, transition: "all 0.15s ease" }}
+        >
+          {r.confirmed_by ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+          {r.confirmed_by ? `Booked by ${r.confirmed_by}` : "Mark as booked"}
+        </button>
+        {r.confirmed_at && r.confirmed_by && (
+          <span style={{ fontFamily: FONTS.mono, fontSize: "0.72rem", color: COLORS.muted }}>
+            {new Date(r.confirmed_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+          </span>
+        )}
       </div>
 
       <div style={{ borderTop: "1px solid rgba(38,70,83,0.08)", display: "grid", gridTemplateColumns: "1fr 1px 1fr", alignItems: "stretch" }}>
