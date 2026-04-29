@@ -10,6 +10,7 @@ import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
 import { useTouchDevice } from "../hooks/useBreakpoint";
+import { parseCostNum } from "../utils/cost";
 
 const DEFAULT_ACTIVITIES = [
   { title: "Flora Farms Dinner", icon: "🌿", cost: "$80–120/pp", duration: "Evening", distance: "~20 min drive", description: "Michelin-recommended farm-to-table on a 25-acre organic farm in San José del Cabo. Dine under string lights with produce pulled from the ground that morning. One of the hardest reservations in Los Cabos — book 4+ weeks ahead.", tag: "Culinary", sort: 0, link: "https://www.sevenrooms.com/reservations/florafarms" },
@@ -33,13 +34,6 @@ const SORTS = [
   { id: "tag", label: "Tag" },
   { id: "cost", label: "Cost" },
 ];
-
-function parseCostNum(cost) {
-  if (!cost) return 0;
-  if (cost.toUpperCase().includes("FREE")) return 0;
-  const m = cost.match(/\d+/);
-  return m ? parseInt(m[0], 10) : 0;
-}
 
 const BLANK_FORM = { icon: "✨", title: "", tag: "Adventure", cost: "", duration: "", distance: "", description: "", link: "" };
 

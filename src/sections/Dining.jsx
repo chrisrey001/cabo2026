@@ -9,6 +9,7 @@ import VoterPills from "../components/VoterPills";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
+import { parseCostNum } from "../utils/cost";
 
 const DEFAULT_DINING = [
   { name: "Flora Farms", cost: "$80–100/pp", cuisine: "Farm-to-Table", distance: "20 min drive", hours: "5:30 – 10 PM", phone: "+52 624 355 4564", vibe: "Magical outdoor farm", book: "OpenTable, 4+ weeks ahead", cost_num: 90, sort: 0 },
@@ -125,7 +126,7 @@ export default function Dining() {
     if (!form.name.trim()) return;
     setSubmitting(true);
     const nextSort = restaurants.length ? Math.max(...restaurants.map((r) => r.sort ?? 0)) + 1 : 0;
-    const draft = { ...form, cost_num: 0, sort: nextSort, added_by: voterName || null };
+    const draft = { ...form, cost_num: parseCostNum(form.cost), sort: nextSort, added_by: voterName || null };
 
     if (!hasSupabase) {
       setRestaurants((prev) => [...prev, { ...draft, id: `local-${Date.now()}` }]);
