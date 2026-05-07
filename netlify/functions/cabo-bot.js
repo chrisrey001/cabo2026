@@ -98,15 +98,37 @@ When to call a tool:
 - Do NOT auto-add suggestions. If you think something belongs on the list, *suggest it* and ask if they'd like it added.
 - Never invent precise prices, hours, or phone numbers. Use ranges or leave fields blank when unsure.
 - For activities, the \`tag\` must be one of: ${ACTIVITY_TAGS.map((t) => `"${t}"`).join(", ")}.
-- After a successful tool call, briefly confirm what was added and tell the user to scroll to the section (or refresh) to see it. Do not list every field back at them.
+- After a successful tool call, briefly confirm what was added. The list updates live — no refresh needed.
+
+## Tools — web search
+You also have a \`web_search\` tool. Use it when:
+- The user asks about hours, current prices, recent reviews, or "what's new."
+- They want a recent recommendation ("best taco spot right now," "hottest sunset cruise").
+- The answer would be stronger with a fresh source link.
+- They ask you to find a real operator before adding to the trip — search first, then call \`add_activity\` / \`add_restaurant\` with details from a reputable result.
+
+Don't search for things you already know reliably (e.g. "what is El Arco?", "what time does sunset happen in June?"). You're capped at 3 searches per turn. Sources don't need to be booking sites — local blogs, Reddit, Google Maps reviews, news, the operator's own site are all fair game.
+
+## Response format
+
+**For normal questions (no web search):**
+- Short paragraphs. Markdown bold and bullets when comparing options.
+- 2–4 sentences typical, or up to 5 bullets.
+
+**When you used web search, format the answer as:**
+- One short sentence framing the answer.
+- A tight bulleted list (max 5). Each bullet:
+  - Lead with **bold name**.
+  - 1-line description (vibe, price band, why it's good).
+  - Inline Markdown link: [more info](url).
+  - One fitting emoji at the end of the bullet (🌮 🌅 🐬 🏖️ 🍹 ⛵ 🌵).
+- Skip filler. No long paragraphs.
+- Do **not** add a "Sources:" list yourself — citations are appended automatically.
 
 ## Other constraints
 - Stay in Baja California Sur. Politely redirect off-topic destination questions back to Cabo.
 - If the group has already booked an activity or restaurant, reference it when relevant.
-- If asked for an opinion, give one.
-
-## Response format
-- Use Markdown for emphasis and short bulleted lists when it helps. Short paragraphs over walls of text.`;
+- If asked for an opinion, give one.`;
 }
 
 const TOOLS = [
@@ -150,6 +172,18 @@ const TOOLS = [
         book: { type: "string", description: "How to book, e.g. 'OpenTable', 'Walk-in OK', 'Call ahead'. Leave blank if unknown." },
       },
       required: ["name", "cuisine", "vibe"],
+    },
+  },
+  {
+    type: "web_search_20250305",
+    name: "web_search",
+    max_uses: 3,
+    user_location: {
+      type: "approximate",
+      city: "Cabo San Lucas",
+      region: "Baja California Sur",
+      country: "MX",
+      timezone: "America/Mazatlan",
     },
   },
 ];
@@ -248,6 +282,32 @@ function extractText(blocks) {
     .trim();
 }
 
+function extractCitations(blocks) {
+  const out = [];
+  for (const b of blocks) {
+    if (b.type !== "text" || !Array.isArray(b.citations)) continue;
+    for (const c of b.citations) {
+      if (c.type !== "web_search_result_location") continue;
+      if (!c.url) continue;
+      out.push({ url: c.url, title: c.title || c.url });
+    }
+  }
+  return out;
+}
+
+function formatSources(citations) {
+  if (!citations.length) return "";
+  const seen = new Set();
+  const unique = [];
+  for (const c of citations) {
+    if (seen.has(c.url)) continue;
+    seen.add(c.url);
+    unique.push(c);
+  }
+  const lines = unique.map((c) => `- [${c.title}](${c.url})`).join("\n");
+  return `\n\n**Sources:**\n${lines}`;
+}
+
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
 
@@ -283,6 +343,8 @@ export const handler = async (event) => {
     const conversation = [...messages];
     let finalText = "";
     let toolsUsed = [];
+    const citations = [];
+    let webSearches = 0;
 
     for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
       const resp = await client.messages.create({
@@ -294,9 +356,20 @@ export const handler = async (event) => {
         messages: conversation,
       });
 
+      citations.push(...extractCitations(resp.content));
+      webSearches += resp.usage?.server_tool_use?.web_search_requests || 0;
+
       if (resp.stop_reason !== "tool_use") {
-        finalText = extractText(resp.content);
-        log("info", "ok", { iters: i + 1, turns: messages.length, outChars: finalText.length, stop: resp.stop_reason, tools: toolsUsed });
+        finalText = extractText(resp.content) + formatSources(citations);
+        log("info", "ok", {
+          iters: i + 1,
+          turns: messages.length,
+          outChars: finalText.length,
+          stop: resp.stop_reason,
+          tools: toolsUsed,
+          webSearches,
+          citations: citations.length,
+        });
         break;
       }
 
