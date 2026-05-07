@@ -13,6 +13,7 @@ import Polls from "./sections/Polls";
 import Dining from "./sections/Dining";
 import Logistics from "./sections/Logistics";
 import CTA from "./sections/CTA";
+import CaboBot from "./components/CaboBot";
 
 export default function App() {
   const isMobile = useMobile();
@@ -33,6 +34,7 @@ export default function App() {
         <Logistics />
         <CTA />
       </main>
+      <CaboBot />
     </>
   );
 }

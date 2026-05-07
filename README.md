@@ -11,7 +11,8 @@ on Netlify.
 
 - **Vite + React 18** — SPA build, zero config
 - **Supabase** — Postgres + auto REST APIs. Tables: `guests`, `flights`, `days`, `polls`, `votes`, `restaurants`, `restaurant_votes`, `activities`, `activity_votes`, `activity_comments`. Per-section voting uses a localStorage `voter_id` UUID — no auth.
-- **Netlify** — auto-deploys from `main`
+- **Netlify** — auto-deploys from `main` · serverless function `cabo-bot` powers the floating chat widget
+- **Anthropic Claude Haiku 4.5** — backs the Cabo Bot chat (server-side only, key never ships to the browser)
 - **Open-Meteo** — live 7-day forecast + sunrise/sunset (no key required)
 - **Frankfurter** — USD ↔ MXN currency conversion (no key required)
 - **Leaflet + react-leaflet** — interactive map
@@ -62,8 +63,9 @@ lives in [`netlify.toml`](netlify.toml) (`npm run build` → `dist`).
 Netlify env vars to set on the site:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `ANTHROPIC_API_KEY` — required for the Cabo Bot Netlify Function (`netlify/functions/cabo-bot.js`). Without it the floating chat widget will return a 500.
 
-Both should be set to **"Same value for all deploy contexts"**.
+All should be set to **"Same value for all deploy contexts"**.
 
 To roll back a bad deploy: Netlify → Deploys → click the ⋯ menu on the
 last good deploy → **Publish deploy**.
