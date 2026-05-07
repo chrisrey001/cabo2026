@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Send, X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { COLORS, FONTS } from "../theme";
 import { useMobile } from "../hooks/useBreakpoint";
 
@@ -277,27 +278,47 @@ export default function CaboBot() {
   );
 }
 
+const MD_COMPONENTS = {
+  p: ({ children }) => <p style={{ margin: "0 0 8px" }}>{children}</p>,
+  ul: ({ children }) => <ul style={{ margin: "4px 0 8px", paddingLeft: 20 }}>{children}</ul>,
+  ol: ({ children }) => <ol style={{ margin: "4px 0 8px", paddingLeft: 20 }}>{children}</ol>,
+  li: ({ children }) => <li style={{ margin: "2px 0" }}>{children}</li>,
+  strong: ({ children }) => <strong style={{ fontWeight: 700 }}>{children}</strong>,
+  em: ({ children }) => <em style={{ fontStyle: "italic" }}>{children}</em>,
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: COLORS.teal, textDecoration: "underline" }}>
+      {children}
+    </a>
+  ),
+  code: ({ children }) => (
+    <code style={{ fontFamily: FONTS.mono, fontSize: "0.85em", background: "rgba(38,70,83,0.08)", padding: "1px 5px", borderRadius: 4 }}>
+      {children}
+    </code>
+  ),
+};
+
 function Bubble({ role, content }) {
   const isUser = role === "user";
+  const baseStyle = {
+    alignSelf: isUser ? "flex-end" : "flex-start",
+    maxWidth: "85%",
+    background: isUser ? COLORS.teal : COLORS.sand,
+    color: isUser ? COLORS.foam : COLORS.night,
+    padding: "9px 13px",
+    borderRadius: 14,
+    borderBottomRightRadius: isUser ? 4 : 14,
+    borderBottomLeftRadius: isUser ? 14 : 4,
+    fontFamily: FONTS.sans,
+    fontSize: "0.92rem",
+    lineHeight: 1.45,
+    wordBreak: "break-word",
+  };
+  if (isUser) {
+    return <div style={{ ...baseStyle, whiteSpace: "pre-wrap" }}>{content}</div>;
+  }
   return (
-    <div
-      style={{
-        alignSelf: isUser ? "flex-end" : "flex-start",
-        maxWidth: "85%",
-        background: isUser ? COLORS.teal : COLORS.sand,
-        color: isUser ? COLORS.foam : COLORS.night,
-        padding: "9px 13px",
-        borderRadius: 14,
-        borderBottomRightRadius: isUser ? 4 : 14,
-        borderBottomLeftRadius: isUser ? 14 : 4,
-        fontFamily: FONTS.sans,
-        fontSize: "0.92rem",
-        lineHeight: 1.45,
-        whiteSpace: "pre-wrap",
-        wordBreak: "break-word",
-      }}
-    >
-      {content}
+    <div style={baseStyle} className="cabo-bot-bubble">
+      <ReactMarkdown components={MD_COMPONENTS}>{content}</ReactMarkdown>
     </div>
   );
 }
