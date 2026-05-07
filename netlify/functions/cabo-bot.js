@@ -2,10 +2,14 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
 const MODEL = "claude-haiku-4-5-20251001";
-const MAX_TOKENS = 512;
+const MAX_TOKENS = 700;
 const MAX_TURNS = 20;
 const MAX_USER_CHARS = 2000;
+const MAX_TOOL_ITERATIONS = 4;
 const TRIP_START_ISO = "2026-06-14T09:25:00-06:00";
+const ADDED_BY = "Cabo Bot";
+
+const ACTIVITY_TAGS = ["Culinary", "Sightseeing", "Culture", "Adventure", "Other"];
 
 const json = (statusCode, body) => ({
   statusCode,
@@ -17,19 +21,21 @@ const log = (level, msg, extra = {}) => {
   console.log(JSON.stringify({ level, fn: "cabo-bot", msg, ...extra }));
 };
 
-async function fetchTripContext() {
+function getSupabase() {
   const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
 
-  const supa = createClient(url, key, { auth: { persistSession: false } });
+async function fetchTripContext(supa) {
+  if (!supa) return null;
   const [guests, activities, restaurants, polls] = await Promise.all([
     supa.from("guests").select("name,role,confirmed"),
     supa.from("activities").select("title,cost,tag,confirmed_by"),
     supa.from("restaurants").select("name,cuisine,confirmed_by"),
     supa.from("polls").select("question,options,closed").eq("closed", false),
   ]);
-
   return {
     guests: guests.data || [],
     activities: activities.data || [],
@@ -82,11 +88,143 @@ Friendly, sun-soaked, useful. Light flavor — occasional "amigo," "local secret
 - Toss in a useful Spanish phrase when natural ("la cuenta, por favor").
 - Safety: Authorized Taxis or Uber, sunscreen, hydrate.
 
-## Constraints
+## Tools — adding to the trip plan
+You can add new entries directly to the group's lists with two tools:
+- \`add_activity\` — adds to the **Experiences & Adventures** section.
+- \`add_restaurant\` — adds to the **Dining Guide** section.
+
+When to call a tool:
+- ONLY when the user explicitly asks you to add something (e.g. "add Mariscos La Guerrerense to dining," "put Flora Farms on the list," "add a sunset cruise to our experiences").
+- Do NOT auto-add suggestions. If you think something belongs on the list, *suggest it* and ask if they'd like it added.
+- Never invent precise prices, hours, or phone numbers. Use ranges or leave fields blank when unsure.
+- For activities, the \`tag\` must be one of: ${ACTIVITY_TAGS.map((t) => `"${t}"`).join(", ")}.
+- After a successful tool call, briefly confirm what was added and tell the user to scroll to the section (or refresh) to see it. Do not list every field back at them.
+
+## Other constraints
 - Stay in Baja California Sur. Politely redirect off-topic destination questions back to Cabo.
 - If the group has already booked an activity or restaurant, reference it when relevant.
-- Don't invent specific prices, hours, or phone numbers — say "worth confirming on their site / Google" instead.
-- If asked for an opinion, give one.`;
+- If asked for an opinion, give one.
+
+## Response format
+- Use Markdown for emphasis and short bulleted lists when it helps. Short paragraphs over walls of text.`;
+}
+
+const TOOLS = [
+  {
+    name: "add_activity",
+    description:
+      "Add a new activity/experience to the group's 'Experiences & Adventures' section. Only call this when the user explicitly asks you to add something.",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short title, e.g. 'Sunset Sailing Charter'." },
+        description: { type: "string", description: "1–3 sentence description of what makes it worth doing." },
+        tag: {
+          type: "string",
+          enum: ACTIVITY_TAGS,
+          description: "Category for the activity.",
+        },
+        icon: { type: "string", description: "Single emoji that fits the activity (e.g. '⛵'). Optional." },
+        cost: { type: "string", description: "Cost range like '$50–80/pp' or 'FREE'. Leave blank if unknown." },
+        duration: { type: "string", description: "How long it takes, e.g. '2 hrs', 'Half day'. Leave blank if unknown." },
+        distance: { type: "string", description: "Travel time from villa, e.g. '~25 min drive'. Leave blank if unknown." },
+        link: { type: "string", description: "Booking or info URL. Leave blank if not confident." },
+      },
+      required: ["title", "description", "tag"],
+    },
+  },
+  {
+    name: "add_restaurant",
+    description:
+      "Add a new restaurant to the group's 'Dining Guide' section. Only call this when the user explicitly asks you to add one.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Restaurant name." },
+        cuisine: { type: "string", description: "Cuisine type, e.g. 'Seafood', 'Italian', 'Traditional Mexican'." },
+        vibe: { type: "string", description: "Short vibe description, e.g. 'Cliffside fine dining' or 'Casual taco joint'." },
+        cost: { type: "string", description: "Cost range like '$60–80/pp'. Leave blank if unknown." },
+        distance: { type: "string", description: "From the villa, e.g. '20 min drive'. Leave blank if unknown." },
+        hours: { type: "string", description: "Opening hours, e.g. '5 – 10 PM'. Leave blank if unknown." },
+        phone: { type: "string", description: "Phone number if confidently known. Leave blank otherwise." },
+        book: { type: "string", description: "How to book, e.g. 'OpenTable', 'Walk-in OK', 'Call ahead'. Leave blank if unknown." },
+      },
+      required: ["name", "cuisine", "vibe"],
+    },
+  },
+];
+
+async function nextSort(supa, table) {
+  const { data, error } = await supa.from(table).select("sort").order("sort", { ascending: false }).limit(1);
+  if (error || !data?.length) return 0;
+  return (data[0].sort ?? 0) + 1;
+}
+
+function parseCostNum(cost) {
+  if (!cost) return 0;
+  const matches = String(cost).match(/\d+/g);
+  if (!matches) return 0;
+  const nums = matches.map(Number);
+  const avg = nums.reduce((s, n) => s + n, 0) / nums.length;
+  return Math.round(avg);
+}
+
+async function runTool(supa, name, input) {
+  if (!supa) return { ok: false, error: "Trip database is not configured on the server." };
+
+  if (name === "add_activity") {
+    const { title, description, tag, icon, cost, duration, distance, link } = input || {};
+    if (!title || !description || !tag) return { ok: false, error: "Missing required fields (title, description, tag)." };
+    if (!ACTIVITY_TAGS.includes(tag)) return { ok: false, error: `Invalid tag. Must be one of: ${ACTIVITY_TAGS.join(", ")}` };
+
+    const sort = await nextSort(supa, "activities");
+    const row = {
+      title,
+      description,
+      tag,
+      icon: icon || "✨",
+      cost: cost || "",
+      duration: duration || "",
+      distance: distance || "",
+      link: link || "",
+      sort,
+      added_by: ADDED_BY,
+    };
+    const { data, error } = await supa.from("activities").insert(row).select().single();
+    if (error) {
+      log("error", "add_activity insert failed", { err: error.message });
+      return { ok: false, error: "Database insert failed." };
+    }
+    return { ok: true, id: data.id, title: data.title };
+  }
+
+  if (name === "add_restaurant") {
+    const { name: rName, cuisine, vibe, cost, distance, hours, phone, book } = input || {};
+    if (!rName || !cuisine || !vibe) return { ok: false, error: "Missing required fields (name, cuisine, vibe)." };
+
+    const sort = await nextSort(supa, "restaurants");
+    const row = {
+      name: rName,
+      cuisine,
+      vibe,
+      cost: cost || "",
+      distance: distance || "",
+      hours: hours || "",
+      phone: phone || "",
+      book: book || "",
+      cost_num: parseCostNum(cost),
+      sort,
+      added_by: ADDED_BY,
+    };
+    const { data, error } = await supa.from("restaurants").insert(row).select().single();
+    if (error) {
+      log("error", "add_restaurant insert failed", { err: error.message });
+      return { ok: false, error: "Database insert failed." };
+    }
+    return { ok: true, id: data.id, name: data.name };
+  }
+
+  return { ok: false, error: `Unknown tool: ${name}` };
 }
 
 function sanitizeMessages(raw) {
@@ -100,6 +238,14 @@ function sanitizeMessages(raw) {
   }
   if (!cleaned.length || cleaned[cleaned.length - 1].role !== "user") return null;
   return cleaned.slice(-MAX_TURNS);
+}
+
+function extractText(blocks) {
+  return blocks
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("")
+    .trim();
 }
 
 export const handler = async (event) => {
@@ -121,9 +267,11 @@ export const handler = async (event) => {
   const messages = sanitizeMessages(payload.messages);
   if (!messages) return json(400, { error: "Invalid messages array" });
 
+  const supa = getSupabase();
+
   let context = null;
   try {
-    context = await fetchTripContext();
+    context = await fetchTripContext(supa);
   } catch (err) {
     log("warn", "trip context fetch failed; continuing without it", { err: String(err) });
   }
@@ -132,20 +280,49 @@ export const handler = async (event) => {
 
   try {
     const client = new Anthropic({ apiKey });
-    const resp = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      temperature: 0.7,
-      system,
-      messages,
-    });
-    const text = resp.content
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim();
-    log("info", "ok", { turns: messages.length, outChars: text.length, stop: resp.stop_reason });
-    return json(200, { message: text });
+    const conversation = [...messages];
+    let finalText = "";
+    let toolsUsed = [];
+
+    for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+      const resp = await client.messages.create({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        temperature: 0.7,
+        system,
+        tools: TOOLS,
+        messages: conversation,
+      });
+
+      if (resp.stop_reason !== "tool_use") {
+        finalText = extractText(resp.content);
+        log("info", "ok", { iters: i + 1, turns: messages.length, outChars: finalText.length, stop: resp.stop_reason, tools: toolsUsed });
+        break;
+      }
+
+      conversation.push({ role: "assistant", content: resp.content });
+      const toolUses = resp.content.filter((b) => b.type === "tool_use");
+      const results = await Promise.all(
+        toolUses.map(async (tu) => {
+          toolsUsed.push(tu.name);
+          const result = await runTool(supa, tu.name, tu.input);
+          return {
+            type: "tool_result",
+            tool_use_id: tu.id,
+            content: JSON.stringify(result),
+            is_error: !result.ok,
+          };
+        })
+      );
+      conversation.push({ role: "user", content: results });
+    }
+
+    if (!finalText) {
+      finalText = "Sorry, amigo — that one looped longer than expected. Try rephrasing?";
+      log("warn", "tool loop exhausted", { tools: toolsUsed });
+    }
+
+    return json(200, { message: finalText });
   } catch (err) {
     log("error", "anthropic call failed", { err: String(err), status: err?.status });
     return json(502, { error: "Cabo Bot is napping in the shade. Try again in a sec." });

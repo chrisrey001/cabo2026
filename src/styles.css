@@ -100,6 +100,10 @@ textarea {
   color: var(--night);
 }
 
+/* ── Cabo Bot markdown bubble ── */
+.cabo-bot-bubble > :last-child { margin-bottom: 0 !important; }
+.cabo-bot-bubble > :first-child { margin-top: 0 !important; }
+
 /* ── Map tooltip ── */
 .leaflet-tooltip.cabo-tooltip {
   background: white;
