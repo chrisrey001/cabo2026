@@ -11,6 +11,7 @@ import { emitSave } from "../components/SaveBadge";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
 import { useTouchDevice } from "../hooks/useBreakpoint";
 import { parseCostNum } from "../utils/cost";
+import { applyChange, sortBySort, sortByCreatedAt } from "../utils/realtime";
 
 const DEFAULT_ACTIVITIES = [
   { title: "Flora Farms Dinner", icon: "🌿", cost: "$80–120/pp", duration: "Evening", distance: "~20 min drive", description: "Michelin-recommended farm-to-table on a 25-acre organic farm in San José del Cabo. Dine under string lights with produce pulled from the ground that morning. One of the hardest reservations in Los Cabos — book 4+ weeks ahead.", tag: "Culinary", sort: 0, link: "https://www.sevenrooms.com/reservations/florafarms" },
@@ -82,6 +83,25 @@ export default function Activities() {
       setComments(cData || []);
       setLoading(false);
     })();
+  }, []);
+
+  useEffect(() => {
+    if (!hasSupabase) return;
+    const ch = supabase
+      .channel("activities-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "activities" }, (p) =>
+        applyChange(setActivities, p, { sort: sortBySort })
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "activity_votes" }, (p) =>
+        applyChange(setAvotes, p, { keyFields: ["activity_id", "voter_id"] })
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "activity_comments" }, (p) =>
+        applyChange(setComments, p, { sort: sortByCreatedAt, keyFields: ["activity_id", "author", "body"] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, []);
 
   const persist = async (row) => {

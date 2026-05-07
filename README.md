@@ -52,6 +52,7 @@ files in order:
 3. [`supabase/phase3_migration.sql`](supabase/phase3_migration.sql) — `activity_comments` table.
 4. [`supabase/activity_link_migration.sql`](supabase/activity_link_migration.sql) — adds the booking-`link` column to activities.
 5. [`supabase/phase4_migration.sql`](supabase/phase4_migration.sql) — adds `confirmed_by` + `confirmed_at` columns to activities and restaurants for the reservation tracker.
+6. [`supabase/cabobot_realtime_migration.sql`](supabase/cabobot_realtime_migration.sql) — adds activities, restaurants, and their vote/comment children to the `supabase_realtime` publication so Cabo Bot's additions and live votes/comments propagate without page reloads.
 
 Every migration uses `if not exists` / `add column if not exists`, so they're safe to re-run.
 
@@ -64,6 +65,8 @@ Netlify env vars to set on the site:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `ANTHROPIC_API_KEY` — required for the Cabo Bot Netlify Function (`netlify/functions/cabo-bot.js`). Without it the floating chat widget will return a 500.
+
+> **One-time admin step for web search:** in the [Anthropic Console privacy settings](https://console.anthropic.com/settings/privacy), enable **Web search**. Without it the bot still works but skips searching and falls back to baseline knowledge.
 
 All should be set to **"Same value for all deploy contexts"**.
 

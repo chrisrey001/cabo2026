@@ -10,6 +10,7 @@ import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
 import { useVoterIdentity } from "../hooks/useVoterIdentity";
 import { parseCostNum } from "../utils/cost";
+import { applyChange, sortBySort } from "../utils/realtime";
 
 const DEFAULT_DINING = [
   { name: "Flora Farms", cost: "$80–100/pp", cuisine: "Farm-to-Table", distance: "20 min drive", hours: "5:30 – 10 PM", phone: "+52 624 355 4564", vibe: "Magical outdoor farm", book: "OpenTable, 4+ weeks ahead", cost_num: 90, sort: 0 },
@@ -67,6 +68,22 @@ export default function Dining() {
       setRvotes(vData || []);
       setLoading(false);
     })();
+  }, []);
+
+  useEffect(() => {
+    if (!hasSupabase) return;
+    const ch = supabase
+      .channel("dining-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "restaurants" }, (p) =>
+        applyChange(setRestaurants, p, { sort: sortBySort })
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "restaurant_votes" }, (p) =>
+        applyChange(setRvotes, p, { keyFields: ["restaurant_id", "voter_id"] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, []);
 
   const persist = async (row) => {
