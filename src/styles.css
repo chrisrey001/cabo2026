@@ -118,3 +118,35 @@ textarea {
 .leaflet-tooltip.cabo-tooltip::before {
   border-top-color: white;
 }
+
+/* ── Map popup ── */
+.cabo-popup .leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(38, 70, 83, 0.2);
+  border: none;
+  padding: 0;
+}
+
+.cabo-popup .leaflet-popup-content {
+  margin: 14px 16px;
+}
+
+.cabo-popup .leaflet-popup-tip {
+  box-shadow: none;
+  background: white;
+}
+
+.cabo-popup .leaflet-popup-close-button {
+  color: #264653 !important;
+  opacity: 0.45;
+  top: 8px !important;
+  right: 8px !important;
+  font-size: 20px !important;
+  line-height: 20px !important;
+  padding: 0 !important;
+}
+
+.cabo-popup .leaflet-popup-close-button:hover {
+  opacity: 1;
+  background: none !important;
+}
