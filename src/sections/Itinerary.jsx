@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronsDownUp, ChevronsUpDown, Plus, Trash2, X } from "lucide-react";
 import { COLORS, FONTS, SPACING } from "../theme";
 import EditField from "../components/EditField";
 import EmojiPicker from "../components/EmojiPicker";
@@ -50,7 +50,7 @@ const DEFAULT_DAYS = [
 export default function Itinerary() {
   const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openId, setOpenId] = useState(null);
+  const [openIds, setOpenIds] = useState(() => new Set());
 
   useEffect(() => {
     let alive = true;
@@ -58,7 +58,7 @@ export default function Itinerary() {
       if (!hasSupabase) {
         if (!alive) return;
         setDays(DEFAULT_DAYS);
-        setOpenId(DEFAULT_DAYS[0].id);
+        setOpenIds(new Set(DEFAULT_DAYS.map((d) => d.id)));
         setLoading(false);
         return;
       }
@@ -85,7 +85,7 @@ export default function Itinerary() {
         rows = data;
       }
       setDays(rows);
-      setOpenId(rows[0]?.id ?? null);
+      setOpenIds(new Set(rows.map((r) => r.id)));
       setLoading(false);
     })();
     return () => {
@@ -120,7 +120,7 @@ export default function Itinerary() {
     };
     if (!hasSupabase) {
       setDays([...days, draft]);
-      setOpenId(draft.id);
+      setOpenIds((prev) => new Set(prev).add(draft.id));
       return;
     }
     emitSave("saving");
@@ -138,19 +138,24 @@ export default function Itinerary() {
     if (error) {
       console.error("[cabo2026] days insert failed:", error);
       setDays([...days, draft]);
-      setOpenId(draft.id);
+      setOpenIds((prev) => new Set(prev).add(draft.id));
       emitSave("error");
       return;
     }
     setDays([...days, data]);
-    setOpenId(data.id);
+    setOpenIds((prev) => new Set(prev).add(data.id));
     emitSave("saved");
   };
 
   const removeDay = async (id) => {
     const next = days.filter((d) => d.id !== id);
     setDays(next);
-    if (openId === id) setOpenId(next[0]?.id ?? null);
+    setOpenIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
     if (!hasSupabase || String(id).startsWith("local-")) return;
     emitSave("saving");
     const { error } = await supabase.from("days").delete().eq("id", id);
@@ -180,6 +185,20 @@ export default function Itinerary() {
     updateDay(dayId, { events });
   };
 
+  const toggleDay = (id) => {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allOpen = days.length > 0 && days.every((d) => openIds.has(d.id));
+  const toggleAll = () => {
+    setOpenIds(allOpen ? new Set() : new Set(days.map((d) => d.id)));
+  };
+
   return (
     <section
       id="itinerary"
@@ -199,14 +218,42 @@ export default function Itinerary() {
           </div>
         ) : (
           <>
-            <div style={{ marginTop: 48, display: "grid", gap: 12 }}>
+            {days.length > 1 && (
+              <div style={{ marginTop: 32, display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  onClick={toggleAll}
+                  aria-label={allOpen ? "Collapse all days" : "Expand all days"}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 16px",
+                    border: `1px solid ${COLORS.teal}`,
+                    borderRadius: 999,
+                    color: COLORS.teal,
+                    fontFamily: FONTS.sans,
+                    fontWeight: 600,
+                    fontSize: "0.82rem",
+                    background: "transparent",
+                    transition: "background 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(42,157,143,0.08)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  {allOpen ? <ChevronsDownUp size={16} /> : <ChevronsUpDown size={16} />}
+                  {allOpen ? "Collapse All" : "Expand All"}
+                </button>
+              </div>
+            )}
+
+            <div style={{ marginTop: days.length > 1 ? 16 : 48, display: "grid", gap: 12 }}>
               {days.map((d) => (
                 <DayCard
                   key={d.id}
                   day={d}
-                  open={openId === d.id}
+                  open={openIds.has(d.id)}
                   canDelete={days.length > 1}
-                  onToggle={() => setOpenId(openId === d.id ? null : d.id)}
+                  onToggle={() => toggleDay(d.id)}
                   onChange={(patch) => updateDay(d.id, patch)}
                   onRemove={() => removeDay(d.id)}
                   onAddEvent={() => addEvent(d.id)}
