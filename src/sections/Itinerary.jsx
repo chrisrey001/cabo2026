@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ChevronDown, Plus, Trash2, X } from "lucide-react";
 import { COLORS, FONTS, SPACING } from "../theme";
 import EditField from "../components/EditField";
+import EmojiPicker from "../components/EmojiPicker";
 import { SectionHeader } from "./Cast";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
@@ -267,13 +268,11 @@ function DayCard({ day, open, canDelete, onToggle, onChange, onRemove, onAddEven
           padding: "18px 20px",
         }}
       >
-        <button
-          onClick={onToggle}
-          aria-expanded={open}
-          style={{ fontSize: "1.6rem", lineHeight: 1, padding: 0 }}
-        >
-          {day.emoji || "🌞"}
-        </button>
+        <EmojiPicker
+          value={day.emoji}
+          onChange={(v) => onChange({ emoji: v })}
+          ariaLabel={`Emoji for ${day.title || "day"}`}
+        />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
