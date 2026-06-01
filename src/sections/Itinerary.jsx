@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, Plus, Trash2, X, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { COLORS, FONTS, SPACING } from "../theme";
 import EditField from "../components/EditField";
-import EmojiPicker from "../components/EmojiPicker";
+import { EmojiTrigger, EmojiGrid } from "../components/EmojiPicker";
 import { SectionHeader } from "./Cast";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
@@ -50,7 +50,16 @@ const DEFAULT_DAYS = [
 export default function Itinerary() {
   const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openId, setOpenId] = useState(null);
+  const [openIds, setOpenIds] = useState(() => new Set());
+
+  const toggleDay = (id) => {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   useEffect(() => {
     let alive = true;
@@ -58,7 +67,7 @@ export default function Itinerary() {
       if (!hasSupabase) {
         if (!alive) return;
         setDays(DEFAULT_DAYS);
-        setOpenId(DEFAULT_DAYS[0].id);
+        setOpenIds(new Set([DEFAULT_DAYS[0].id]));
         setLoading(false);
         return;
       }
@@ -85,7 +94,7 @@ export default function Itinerary() {
         rows = data;
       }
       setDays(rows);
-      setOpenId(rows[0]?.id ?? null);
+      setOpenIds(rows[0] ? new Set([rows[0].id]) : new Set());
       setLoading(false);
     })();
     return () => {
@@ -120,7 +129,7 @@ export default function Itinerary() {
     };
     if (!hasSupabase) {
       setDays([...days, draft]);
-      setOpenId(draft.id);
+      setOpenIds((prev) => new Set(prev).add(draft.id));
       return;
     }
     emitSave("saving");
@@ -138,24 +147,35 @@ export default function Itinerary() {
     if (error) {
       console.error("[cabo2026] days insert failed:", error);
       setDays([...days, draft]);
-      setOpenId(draft.id);
+      setOpenIds((prev) => new Set(prev).add(draft.id));
       emitSave("error");
       return;
     }
     setDays([...days, data]);
-    setOpenId(data.id);
+    setOpenIds((prev) => new Set(prev).add(data.id));
     emitSave("saved");
   };
 
   const removeDay = async (id) => {
     const next = days.filter((d) => d.id !== id);
     setDays(next);
-    if (openId === id) setOpenId(next[0]?.id ?? null);
+    setOpenIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const updated = new Set(prev);
+      updated.delete(id);
+      return updated;
+    });
     if (!hasSupabase || String(id).startsWith("local-")) return;
     emitSave("saving");
     const { error } = await supabase.from("days").delete().eq("id", id);
     if (error) console.error("[cabo2026] days delete failed:", error);
     emitSave(error ? "error" : "saved");
+  };
+
+  const allOpen = days.length > 0 && days.every((d) => openIds.has(d.id));
+
+  const toggleAll = () => {
+    setOpenIds(allOpen ? new Set() : new Set(days.map((d) => d.id)));
   };
 
   const addEvent = (dayId) => {
@@ -199,14 +219,45 @@ export default function Itinerary() {
           </div>
         ) : (
           <>
-            <div style={{ marginTop: 48, display: "grid", gap: 12 }}>
+            <div
+              style={{
+                marginTop: 36,
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                onClick={toggleAll}
+                aria-label={allOpen ? "Collapse all days" : "Expand all days"}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: "7px 14px",
+                  border: `1px solid rgba(42,157,143,0.4)`,
+                  borderRadius: 999,
+                  color: COLORS.teal,
+                  fontFamily: FONTS.sans,
+                  fontWeight: 600,
+                  fontSize: "0.8rem",
+                  background: "transparent",
+                  transition: "background 0.2s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(42,157,143,0.08)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                {allOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
+                {allOpen ? "Collapse All" : "Expand All"}
+              </button>
+            </div>
+            <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
               {days.map((d) => (
                 <DayCard
                   key={d.id}
                   day={d}
-                  open={openId === d.id}
+                  open={openIds.has(d.id)}
                   canDelete={days.length > 1}
-                  onToggle={() => setOpenId(openId === d.id ? null : d.id)}
+                  onToggle={() => toggleDay(d.id)}
                   onChange={(patch) => updateDay(d.id, patch)}
                   onRemove={() => removeDay(d.id)}
                   onAddEvent={() => addEvent(d.id)}
@@ -248,6 +299,7 @@ export default function Itinerary() {
 
 function DayCard({ day, open, canDelete, onToggle, onChange, onRemove, onAddEvent, onUpdateEvent, onRemoveEvent }) {
   const events = day.events || [];
+  const [emojiOpen, setEmojiOpen] = useState(false);
 
   return (
     <div
@@ -268,9 +320,10 @@ function DayCard({ day, open, canDelete, onToggle, onChange, onRemove, onAddEven
           padding: "18px 20px",
         }}
       >
-        <EmojiPicker
+        <EmojiTrigger
           value={day.emoji}
-          onChange={(v) => onChange({ emoji: v })}
+          open={emojiOpen}
+          onToggle={() => setEmojiOpen((o) => !o)}
           ariaLabel={`Emoji for ${day.title || "day"}`}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -343,6 +396,19 @@ function DayCard({ day, open, canDelete, onToggle, onChange, onRemove, onAddEven
           />
         </button>
       </div>
+
+      {emojiOpen && (
+        <div style={{ padding: "0 20px 16px 20px" }}>
+          <EmojiGrid
+            value={day.emoji}
+            onSelect={(v) => {
+              onChange({ emoji: v });
+              setEmojiOpen(false);
+            }}
+            onClose={() => setEmojiOpen(false)}
+          />
+        </div>
+      )}
 
       {open && (
         <div className="fade-up" style={{ padding: "6px 22px 22px 44px" }}>
