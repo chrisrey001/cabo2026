@@ -18,7 +18,7 @@ function formatTime(iso) {
 }
 
 export default function Weather() {
-  const { days, isLive, liveCount, total, loading } = useForecast();
+  const { days, isLive, liveCount, total, current, loading } = useForecast();
 
   const allLive = liveCount === total;
   const statusNote = !isLive
@@ -54,6 +54,76 @@ export default function Weather() {
           >
             {statusNote}
           </p>
+        )}
+
+        {!loading && current && (
+          <div
+            style={{
+              maxWidth: 540,
+              margin: "26px auto 0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 18,
+              padding: "18px 24px",
+              borderRadius: 18,
+              background: "rgba(255,252,247,0.08)",
+              border: "1px solid rgba(255,252,247,0.16)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              color: COLORS.foam,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <span style={{ fontSize: "2.6rem", lineHeight: 1 }}>{current.emoji}</span>
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    fontFamily: FONTS.sans,
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    color: COLORS.gold,
+                  }}
+                >
+                  <span className="live-dot" aria-hidden />
+                  Right now in Cabo
+                </div>
+                <div
+                  style={{
+                    fontFamily: FONTS.mono,
+                    fontSize: "2.1rem",
+                    fontWeight: 500,
+                    letterSpacing: "-0.01em",
+                    marginTop: 4,
+                    lineHeight: 1,
+                  }}
+                >
+                  {current.temp}°
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                fontFamily: FONTS.sans,
+                fontSize: "0.8rem",
+                color: "rgba(244,241,222,0.7)",
+                textAlign: "right",
+                lineHeight: 1.7,
+              }}
+            >
+              Feels {current.feelsLike}°
+              <br />
+              Humidity {current.humidity}%
+              <br />
+              Wind {current.wind} mph
+            </div>
+          </div>
         )}
 
         <CenteredGrid minWidth={116} gap={14} maxCols={7} style={{ marginTop: 32 }}>

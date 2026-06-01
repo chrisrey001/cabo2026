@@ -19,7 +19,8 @@ const FALLBACK = TRIP.map(({ iso, travel, ...rest }) => ({ ...rest, sunrise: nul
 // the whole call, so we clamp end_date to stay inside the window.
 const FORECAST_HORIZON_DAYS = 15;
 
-const CACHE_TTL = 3 * 60 * 60 * 1000; // 3 hours
+// Current conditions change through the day, so keep the cache short.
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 function isoDate(d) {
   return d.toISOString().slice(0, 10);
@@ -31,18 +32,41 @@ function addDays(d, n) {
   return next;
 }
 
+// One request gives us both live "now" conditions and the daily trip forecast.
+// When the trip is still beyond the forecast horizon we drop the daily/date
+// params (which would error) but keep current conditions.
 function buildUrl(startIso, endIso) {
-  return (
+  let url =
     "https://api.open-meteo.com/v1/forecast" +
     "?latitude=23.008&longitude=-109.717" +
-    "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,sunrise,sunset" +
     "&timezone=America%2FMazatlan" +
-    "&temperature_unit=fahrenheit" +
-    `&start_date=${startIso}&end_date=${endIso}`
-  );
+    "&temperature_unit=fahrenheit&wind_speed_unit=mph" +
+    "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day";
+  if (startIso) {
+    url +=
+      "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,sunrise,sunset" +
+      `&start_date=${startIso}&end_date=${endIso}`;
+  }
+  return url;
 }
 
-// Map the API response into a lookup keyed by ISO date.
+// Live "right now in Cabo" snapshot.
+function parseCurrent(data) {
+  const c = data && data.current;
+  if (!c || c.temperature_2m == null) return null;
+  const code = c.weather_code;
+  const isDay = c.is_day === 1;
+  return {
+    temp: Math.round(c.temperature_2m),
+    feelsLike: Math.round(c.apparent_temperature),
+    humidity: Math.round(c.relative_humidity_2m),
+    wind: Math.round(c.wind_speed_10m),
+    emoji: !isDay && code === 0 ? "🌙" : codeToEmoji(code),
+    isDay,
+  };
+}
+
+// Map the daily response into a lookup keyed by ISO date.
 function parseDays(data) {
   const d = data && data.daily;
   if (!d || !d.time || d.time.length === 0) return {};
@@ -87,6 +111,7 @@ export function useForecast() {
     isLive: false,
     liveCount: 0,
     total: TRIP.length,
+    current: null,
     loading: true,
   });
 
@@ -109,31 +134,35 @@ export function useForecast() {
 
       // Only request the slice of the trip that falls within the forecast horizon.
       const horizonIso = isoDate(addDays(today, FORECAST_HORIZON_DAYS));
-      const startIso = TRIP[0].iso;
-      const endIso = TRIP[TRIP.length - 1].iso < horizonIso ? TRIP[TRIP.length - 1].iso : horizonIso;
-
-      const finish = (days, liveCount) => {
-        const payload = { days, isLive: liveCount > 0, liveCount, total: TRIP.length };
-        try {
-          sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), payload }));
-        } catch (_) {}
-        setState({ ...payload, loading: false });
-      };
-
-      // The whole trip is still beyond the forecast horizon — show seasonal averages.
-      if (startIso > horizonIso) {
-        finish(FALLBACK, 0);
-        return;
-      }
+      const tripInRange = TRIP[0].iso <= horizonIso;
+      const startIso = tripInRange ? TRIP[0].iso : null;
+      const endIso = tripInRange
+        ? TRIP[TRIP.length - 1].iso < horizonIso
+          ? TRIP[TRIP.length - 1].iso
+          : horizonIso
+        : null;
 
       try {
         const res = await fetch(buildUrl(startIso, endIso));
         if (!res.ok) throw new Error("fetch failed");
-        const live = parseDays(await res.json());
-        const days = mergeDays(live);
-        finish(days, days.filter((d) => d.live).length);
+        const data = await res.json();
+        const current = parseCurrent(data);
+        const days = tripInRange ? mergeDays(parseDays(data)) : FALLBACK;
+        const liveCount = days.filter((d) => d.live).length;
+        const payload = { days, isLive: liveCount > 0, liveCount, total: TRIP.length, current };
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), payload }));
+        } catch (_) {}
+        setState({ ...payload, loading: false });
       } catch (_) {
-        setState({ days: FALLBACK, isLive: false, liveCount: 0, total: TRIP.length, loading: false });
+        setState({
+          days: FALLBACK,
+          isLive: false,
+          liveCount: 0,
+          total: TRIP.length,
+          current: null,
+          loading: false,
+        });
       }
     })();
   }, []);
