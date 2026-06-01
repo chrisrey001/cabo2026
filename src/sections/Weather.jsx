@@ -18,7 +18,14 @@ function formatTime(iso) {
 }
 
 export default function Weather() {
-  const { days, isLive, loading } = useForecast();
+  const { days, isLive, liveCount, total, loading } = useForecast();
+
+  const allLive = liveCount === total;
+  const statusNote = !isLive
+    ? "⊘ Showing seasonal averages · live data available ~16 days out"
+    : allLive
+    ? "● Live forecast · updated hourly via Open-Meteo"
+    : `● Live forecast · ${liveCount} of ${total} days in range · later days show seasonal averages for now`;
 
   return (
     <section
@@ -34,22 +41,22 @@ export default function Weather() {
       <div style={{ position: "relative", maxWidth: 1200, margin: "0 auto" }}>
         <SectionHeader eyebrow="June in Cabo" title="The Forecast" light />
 
-        {!loading && !isLive && (
+        {!loading && (
           <p
             style={{
               textAlign: "center",
               fontFamily: FONTS.mono,
               fontSize: "0.72rem",
-              color: "rgba(244,241,222,0.45)",
+              color: isLive ? "rgba(42,157,143,0.85)" : "rgba(244,241,222,0.45)",
               margin: "16px 0 0",
               letterSpacing: "0.04em",
             }}
           >
-            ⊘ Showing seasonal averages · live data available ~30 days out
+            {statusNote}
           </p>
         )}
 
-        <CenteredGrid minWidth={110} gap={14} style={{ marginTop: 32 }}>
+        <CenteredGrid minWidth={116} gap={14} maxCols={7} style={{ marginTop: 32 }}>
           {days.map((d) => (
             <div
               key={d.day + d.date}
