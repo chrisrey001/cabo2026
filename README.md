@@ -109,7 +109,6 @@ cabo2026/
 │       ├── Flights.jsx               # §4 flights (Supabase)
 │       ├── Weather.jsx               # §5 live forecast (Open-Meteo)
 │       ├── Map.jsx                   # §6 Leaflet map + place cards
-│       ├── Activities.jsx            # §7 experiences (Supabase + votes + comments)
 │       ├── Itinerary.jsx             # days (Supabase)
 │       ├── Dining.jsx                # dining guide (Supabase + votes)
 │       ├── Logistics.jsx             # §11 need-to-know + currency widget
@@ -126,7 +125,7 @@ cabo2026/
 
 ## Sections
 
-All 12 sections, sticky-nav tracked:
+All sections, sticky-nav tracked:
 
 | # | Section | Data source | Notes |
 |---|---|---|---|
@@ -135,9 +134,8 @@ All 12 sections, sticky-nav tracked:
 | 3 | The Villa | static | Photo carousel (22 images) + amenity grid + description |
 | 4 | Flights | **Supabase** (`flights`) | Editable per-couple outbound + return |
 | 5 | Weather | **Open-Meteo API** | Live 7-day forecast + sunrise/sunset, fallback array |
-| 6 | Map | static + Leaflet | Interactive pins ↔ place cards, hover-glow + click-pan |
-| 7 | Experiences & Adventures | **Supabase** (`activities` + `activity_votes` + `activity_comments`) | Editable, votable, comment threads, sort by votes/tag/cost, mark-as-booked tracker |
-| 8 | Itinerary | **Supabase** (`days`) | Editable day-by-day with timeline events · copy-to-email button |
+| 6 | Map | static + Leaflet | Interactive pins ↔ place cards, hover-glow + click-pan · "Explore" tab target |
+| 7 | Itinerary | **Supabase** (`days`) | Editable day-by-day with timeline events · copy-to-email button |
 | 9 | Dining Guide | **Supabase** (`restaurants` + `restaurant_votes`) | Editable, votable, sort by name/cost/distance/votes, tap-to-call, mark-as-booked tracker |
 | 11 | Logistics | static | Expandable cards · USD/MXN currency widget · phone copy buttons |
 | 12 | Let's Go | static | Gradient footer with confetti "I'm In" button |

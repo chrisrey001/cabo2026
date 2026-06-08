@@ -9,8 +9,6 @@ const MAX_TOOL_ITERATIONS = 4;
 const TRIP_START_ISO = "2026-06-14T09:25:00-06:00";
 const ADDED_BY = "Cabo Bot";
 
-const ACTIVITY_TAGS = ["Culinary", "Sightseeing", "Culture", "Adventure", "Other"];
-
 const json = (statusCode, body) => ({
   statusCode,
   headers: { "Content-Type": "application/json" },
@@ -89,15 +87,12 @@ Friendly, sun-soaked, useful. Light flavor — occasional "amigo," "local secret
 - Safety: Authorized Taxis or Uber, sunscreen, hydrate.
 
 ## Tools — adding to the trip plan
-You can add new entries directly to the group's lists with two tools:
-- \`add_activity\` — adds to the **Experiences & Adventures** section.
-- \`add_restaurant\` — adds to the **Dining Guide** section.
+You can add new entries directly to the group's **Dining Guide** with the \`add_restaurant\` tool.
 
-When to call a tool:
-- ONLY when the user explicitly asks you to add something (e.g. "add Mariscos La Guerrerense to dining," "put Flora Farms on the list," "add a sunset cruise to our experiences").
-- Do NOT auto-add suggestions. If you think something belongs on the list, *suggest it* and ask if they'd like it added.
+When to call it:
+- ONLY when the user explicitly asks you to add a restaurant (e.g. "add Mariscos La Guerrerense to dining," "put Flora Farms on the list").
+- Do NOT auto-add suggestions. If you think a spot belongs on the list, *suggest it* and ask if they'd like it added.
 - Never invent precise prices, hours, or phone numbers. Use ranges or leave fields blank when unsure.
-- For activities, the \`tag\` must be one of: ${ACTIVITY_TAGS.map((t) => `"${t}"`).join(", ")}.
 - After a successful tool call, briefly confirm what was added. The list updates live — no refresh needed.
 
 ## Tools — web search
@@ -105,7 +100,7 @@ You also have a \`web_search\` tool. Use it when:
 - The user asks about hours, current prices, recent reviews, or "what's new."
 - They want a recent recommendation ("best taco spot right now," "hottest sunset cruise").
 - The answer would be stronger with a fresh source link.
-- They ask you to find a real operator before adding to the trip — search first, then call \`add_activity\` / \`add_restaurant\` with details from a reputable result.
+- They ask you to find a real spot before adding to the trip — search first, then call \`add_restaurant\` with details from a reputable result.
 
 Don't search for things you already know reliably (e.g. "what is El Arco?", "what time does sunset happen in June?"). You're capped at 3 searches per turn. Sources don't need to be booking sites — local blogs, Reddit, Google Maps reviews, news, the operator's own site are all fair game.
 
@@ -132,29 +127,6 @@ Don't search for things you already know reliably (e.g. "what is El Arco?", "wha
 }
 
 const TOOLS = [
-  {
-    name: "add_activity",
-    description:
-      "Add a new activity/experience to the group's 'Experiences & Adventures' section. Only call this when the user explicitly asks you to add something.",
-    input_schema: {
-      type: "object",
-      properties: {
-        title: { type: "string", description: "Short title, e.g. 'Sunset Sailing Charter'." },
-        description: { type: "string", description: "1–3 sentence description of what makes it worth doing." },
-        tag: {
-          type: "string",
-          enum: ACTIVITY_TAGS,
-          description: "Category for the activity.",
-        },
-        icon: { type: "string", description: "Single emoji that fits the activity (e.g. '⛵'). Optional." },
-        cost: { type: "string", description: "Cost range like '$50–80/pp' or 'FREE'. Leave blank if unknown." },
-        duration: { type: "string", description: "How long it takes, e.g. '2 hrs', 'Half day'. Leave blank if unknown." },
-        distance: { type: "string", description: "Travel time from villa, e.g. '~25 min drive'. Leave blank if unknown." },
-        link: { type: "string", description: "Booking or info URL. Leave blank if not confident." },
-      },
-      required: ["title", "description", "tag"],
-    },
-  },
   {
     name: "add_restaurant",
     description:
@@ -205,32 +177,6 @@ function parseCostNum(cost) {
 
 async function runTool(supa, name, input) {
   if (!supa) return { ok: false, error: "Trip database is not configured on the server." };
-
-  if (name === "add_activity") {
-    const { title, description, tag, icon, cost, duration, distance, link } = input || {};
-    if (!title || !description || !tag) return { ok: false, error: "Missing required fields (title, description, tag)." };
-    if (!ACTIVITY_TAGS.includes(tag)) return { ok: false, error: `Invalid tag. Must be one of: ${ACTIVITY_TAGS.join(", ")}` };
-
-    const sort = await nextSort(supa, "activities");
-    const row = {
-      title,
-      description,
-      tag,
-      icon: icon || "✨",
-      cost: cost || "",
-      duration: duration || "",
-      distance: distance || "",
-      link: link || "",
-      sort,
-      added_by: ADDED_BY,
-    };
-    const { data, error } = await supa.from("activities").insert(row).select().single();
-    if (error) {
-      log("error", "add_activity insert failed", { err: error.message });
-      return { ok: false, error: "Database insert failed." };
-    }
-    return { ok: true, id: data.id, title: data.title };
-  }
 
   if (name === "add_restaurant") {
     const { name: rName, cuisine, vibe, cost, distance, hours, phone, book } = input || {};
