@@ -3,6 +3,7 @@ import { ChevronDown, ChevronsDownUp, ChevronsUpDown, Plus, Trash2, X } from "lu
 import { COLORS, FONTS, SPACING } from "../theme";
 import EditField from "../components/EditField";
 import EmojiPicker from "../components/EmojiPicker";
+import CopyButton from "../components/CopyButton";
 import { SectionHeader } from "./Cast";
 import { supabase, hasSupabase } from "../supabase";
 import { emitSave } from "../components/SaveBadge";
@@ -46,6 +47,25 @@ const DEFAULT_DAYS = [
     ],
   },
 ];
+
+// Build the clean, email-friendly plain-text version of the itinerary.
+function buildItineraryText(days) {
+  const lines = ["🌴 Cabo '26 — Itinerary", ""];
+  days.forEach((d) => {
+    const events = (d.events || []).filter((e) => (e.desc || "").trim());
+    const header = `${d.emoji ? d.emoji + " " : ""}${(d.title || "").trim()}${
+      d.day_label && d.day_label.trim() ? ` — ${d.day_label.trim()}` : ""
+    }`.trim();
+    if (!header && !events.length) return;
+    lines.push(header);
+    events.forEach((e) => {
+      const time = (e.time || "").trim();
+      lines.push(`• ${time ? `${time} — ` : ""}${e.desc.trim()}`);
+    });
+    lines.push("");
+  });
+  return lines.join("\n").trim();
+}
 
 export default function Itinerary() {
   const [days, setDays] = useState([]);
@@ -209,6 +229,16 @@ export default function Itinerary() {
     >
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
         <SectionHeader eyebrow="Day by Day" title="The Itinerary" />
+
+        {!loading && (
+          <div style={{ marginTop: 18, display: "flex", justifyContent: "center" }}>
+            <CopyButton
+              value={buildItineraryText(days)}
+              label="Copy Itinerary"
+              copiedLabel="Copied!"
+            />
+          </div>
+        )}
 
         {loading ? (
           <div style={{ marginTop: 48, display: "grid", gap: 12 }}>
