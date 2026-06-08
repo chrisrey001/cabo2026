@@ -27,7 +27,6 @@ export const SECTIONS = [
   { id: "itinerary", label: "Itinerary" },
   { id: "dining", label: "Dining" },
   { id: "map", label: "Map" },
-  { id: "activities", label: "Experiences" },
   { id: "groceries", label: "Groceries" },
   { id: "logistics", label: "Logistics" },
   { id: "cta", label: "Let's Go" },

@@ -7,7 +7,6 @@ import Villa from "./sections/Villa";
 import Flights from "./sections/Flights";
 import Weather from "./sections/Weather";
 import MapSection from "./sections/Map";
-import Activities from "./sections/Activities";
 import Itinerary from "./sections/Itinerary";
 import Dining from "./sections/Dining";
 import GroceryList from "./sections/GroceryList";
@@ -29,7 +28,6 @@ export default function App() {
         <Itinerary />
         <Dining />
         <MapSection />
-        <Activities />
         <GroceryList />
         <Logistics />
         <CTA />

@@ -8,7 +8,7 @@ import { useMobile, useDesktop } from "../hooks/useBreakpoint";
 const BOTTOM_TABS = [
   { id: "hero",       label: "Home",    Icon: Home },
   { id: "villa",      label: "Villa",   Icon: Building2 },
-  { id: "activities", label: "Explore", Icon: Compass },
+  { id: "map",        label: "Explore", Icon: Compass },
   { id: "itinerary",  label: "Plan",    Icon: CalendarDays },
 ];
 
